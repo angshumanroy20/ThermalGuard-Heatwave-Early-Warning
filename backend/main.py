@@ -21,6 +21,7 @@ from typing import List, Dict, Any, Optional
 
 from fastapi import FastAPI, HTTPException, Body  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore
+from fastapi.staticfiles import StaticFiles  # type: ignore
 from pydantic import BaseModel  # type: ignore
 
 try:
@@ -573,6 +574,11 @@ def submit_feedback(req: FeedbackSubmitRequest):
         notes=req.notes
     )
     return {"status": "CALIBRATION_UPDATED", "entry": result}
+
+# Mount built production frontend if present so both frontend & backend run on a single port
+_dist_path = os.path.join(_parent_dir, "frontend", "dist")
+if os.path.isdir(_dist_path):
+    app.mount("/", StaticFiles(directory=_dist_path, html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn  # type: ignore
