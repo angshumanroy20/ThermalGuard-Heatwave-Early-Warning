@@ -1,10 +1,11 @@
-export const BACKEND_URL = (import.meta as any).env?.VITE_API_BASE || '';
+const rawBase = ((import.meta as any).env?.VITE_API_BASE || '').trim().replace(/\/+$/, '');
+export const BACKEND_URL = rawBase.endsWith('/api') ? rawBase.slice(0, -4) : rawBase;
 export const API_BASE = BACKEND_URL ? `${BACKEND_URL}/api` : '/api';
 
 /**
  * Robust fetch helper for ThermalGuard APIs.
  * Supports relative endpoints ('/status', 'status', '/api/status') and full URLs.
- * Binds directly to the local Vite proxy or custom backend target.
+ * Binds directly to the local Vite proxy or custom backend target (e.g. Render live URL).
  */
 export const apiFetch = async (endpointOrUrl: string, init?: RequestInit): Promise<Response> => {
   let url: string;
