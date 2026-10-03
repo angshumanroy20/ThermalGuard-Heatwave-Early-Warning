@@ -3,31 +3,64 @@ ThermalGuard Master FastAPI Application
 Extreme Heatwave Early Warning and Human Thermal Stress Index System
 """
 
-from fastapi import FastAPI, HTTPException, Query, Body
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+import sys
+import os
+
+# Ensure embedded python site-packages, local backend modules, and root are on sys.path before third-party imports
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_parent_dir = os.path.dirname(_current_dir)
+_site_packages = os.path.join(_parent_dir, "python_embed", "Lib", "site-packages")
+
+for _path in [_current_dir, _parent_dir, _site_packages]:
+    if os.path.exists(_path) and _path not in sys.path:
+        sys.path.insert(0, _path)
+
 import datetime
 import math
+from typing import List, Dict, Any, Optional
 
-from .algorithms import calculate_wbgt_outdoor
-from .datasets import (
-    INDIAN_CITIES_WARDS,
-    NCDC_SURVEILLANCE_BASELINE,
-    NCMRWF_NWP_METADATA,
-    fetch_open_meteo_live,
-    get_calibrated_scenario_data
-)
-from .models import AIRiskEngine
-from .alerts import (
-    get_role_specific_advisories,
-    build_twilio_sms_payload,
-    build_whatsapp_business_payload,
-    build_fast2sms_payload,
-    generate_sachet_cap_xml
-)
-from .analyst_store import analyst_store
-from .settings_store import settings_store
+from fastapi import FastAPI, HTTPException, Body  # type: ignore
+from fastapi.middleware.cors import CORSMiddleware  # type: ignore
+from pydantic import BaseModel  # type: ignore
+
+try:
+    from .algorithms import calculate_wbgt_outdoor
+    from .datasets import (
+        INDIAN_CITIES_WARDS,
+        NCDC_SURVEILLANCE_BASELINE,
+        NCMRWF_NWP_METADATA,
+        fetch_open_meteo_live,
+        get_calibrated_scenario_data
+    )
+    from .models import AIRiskEngine
+    from .alerts import (
+        get_role_specific_advisories,
+        build_twilio_sms_payload,
+        build_whatsapp_business_payload,
+        build_fast2sms_payload,
+        generate_sachet_cap_xml
+    )
+    from .analyst_store import analyst_store
+    from .settings_store import settings_store
+except (ImportError, ValueError):
+    from algorithms import calculate_wbgt_outdoor
+    from datasets import (
+        INDIAN_CITIES_WARDS,
+        NCDC_SURVEILLANCE_BASELINE,
+        NCMRWF_NWP_METADATA,
+        fetch_open_meteo_live,
+        get_calibrated_scenario_data
+    )
+    from models import AIRiskEngine
+    from alerts import (
+        get_role_specific_advisories,
+        build_twilio_sms_payload,
+        build_whatsapp_business_payload,
+        build_fast2sms_payload,
+        generate_sachet_cap_xml
+    )
+    from analyst_store import analyst_store
+    from settings_store import settings_store
 
 app = FastAPI(
     title="ThermalGuard API",
@@ -540,3 +573,10 @@ def submit_feedback(req: FeedbackSubmitRequest):
         notes=req.notes
     )
     return {"status": "CALIBRATION_UPDATED", "entry": result}
+
+if __name__ == "__main__":
+    import uvicorn  # type: ignore
+    app_target = "backend.main:app" if os.path.isdir("backend") else "main:app"
+    print(f"Starting ThermalGuard API server '{app_target}' on http://127.0.0.1:8000 ...")
+    uvicorn.run(app_target, host="127.0.0.1", port=8000, reload=True)
+

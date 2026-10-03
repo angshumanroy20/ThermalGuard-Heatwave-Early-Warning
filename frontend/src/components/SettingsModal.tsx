@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  X, 
   Key, 
   ShieldCheck, 
   Smartphone, 
   MessageSquare, 
   PhoneCall, 
   CheckCircle2, 
-  ToggleLeft, 
-  ToggleRight,
   Save,
+  Zap,
   Radio
 } from 'lucide-react';
 import { API_BASE, apiFetch } from '../api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Input } from './ui/input';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -37,7 +39,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      apiFetch(`${API_BASE}/settings`)
+      apiFetch('/settings')
         .then(res => res.json())
         .then(data => {
           setDispatchMode(data.dispatch_mode || 'SIMULATION');
@@ -46,8 +48,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         .catch(console.error);
     }
   }, [isOpen]);
-
-  if (!isOpen) return null;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,13 +63,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       if (whatsappPhoneId) payload.whatsapp_phone_number_id = whatsappPhoneId;
       if (fast2smsKey) payload.fast2sms_api_key = fast2smsKey;
 
-      const res = await apiFetch(`${API_BASE}/settings`, {
+      await apiFetch('/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const data = await res.json();
-      setSuccessMsg('API credentials & dispatch configuration saved successfully!');
+      setSuccessMsg('API credentials & dispatch routing saved successfully!');
       onSettingsUpdated();
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
@@ -80,283 +79,194 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(5, 8, 16, 0.85)',
-      backdropFilter: 'blur(12px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 2000,
-      padding: '1rem'
-    }}>
-      <div className="glass-panel" style={{
-        width: '100%',
-        maxWidth: '800px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        position: 'relative',
-        padding: '1.75rem',
-        border: '1px solid rgba(255,255,255,0.14)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.75)'
-      }}>
-        {/* Close */}
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '1.25rem',
-            right: '1.25rem',
-            background: 'rgba(255,255,255,0.08)',
-            border: 'none',
-            color: '#94a3b8',
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer'
-          }}
-        >
-          <X size={18} />
-        </button>
-
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
-          <div style={{
-            background: 'rgba(16, 185, 129, 0.2)',
-            padding: '0.6rem',
-            borderRadius: '10px',
-            border: '1px solid rgba(16, 185, 129, 0.35)'
-          }}>
-            <Key size={24} color="#34d399" />
-          </div>
-          <div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', fontWeight: 800, color: '#fff' }}>
-              Live Telephony & Gateway API Credentials
-            </h2>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Configure live credentials for Twilio SMS, Meta WhatsApp Business Cloud API, and Fast2SMS India
-            </p>
-          </div>
-        </div>
-
-        {/* Mode Selector */}
-        <div style={{
-          background: 'rgba(15, 23, 42, 0.85)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '10px',
-          padding: '1rem',
-          marginBottom: '1.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '1rem'
-        }}>
-          <div>
-            <strong style={{ fontSize: '0.9rem', color: '#fff', display: 'block' }}>
-              Global Dispatch Mode
-            </strong>
-            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-              {dispatchMode === 'SIMULATION'
-                ? 'Safe Simulation: Generates realistic payloads & simulated carrier delivery receipts.'
-                : 'Live Production: Transmits real HTTP requests to Twilio, Meta, or Fast2SMS gateways.'}
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={() => setDispatchMode('SIMULATION')}
-              style={{
-                background: dispatchMode === 'SIMULATION' ? 'rgba(59, 130, 246, 0.25)' : 'rgba(255,255,255,0.05)',
-                color: dispatchMode === 'SIMULATION' ? '#60a5fa' : 'var(--text-muted)',
-                border: dispatchMode === 'SIMULATION' ? '1px solid #3b82f6' : '1px solid var(--border-subtle)',
-                padding: '0.4rem 0.85rem',
-                borderRadius: '6px',
-                fontSize: '0.76rem',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              Simulation Mode
-            </button>
-            <button
-              type="button"
-              onClick={() => setDispatchMode('LIVE_PRODUCTION')}
-              style={{
-                background: dispatchMode === 'LIVE_PRODUCTION' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255,255,255,0.05)',
-                color: dispatchMode === 'LIVE_PRODUCTION' ? '#f87171' : 'var(--text-muted)',
-                border: dispatchMode === 'LIVE_PRODUCTION' ? '1px solid #ef4444' : '1px solid var(--border-subtle)',
-                padding: '0.4rem 0.85rem',
-                borderRadius: '6px',
-                fontSize: '0.76rem',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              Live Production Gateway
-            </button>
-          </div>
-        </div>
-
-        {/* Credentials Form */}
-        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Twilio */}
-          <div style={{ background: 'rgba(30, 41, 59, 0.45)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.75rem' }}>
-              <Smartphone size={16} color="#38bdf8" />
-              <strong style={{ fontSize: '0.85rem', color: '#fff' }}>Twilio SMS Configuration</strong>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+              <Key className="h-5 w-5" />
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '0.2rem' }}>Account SID:</label>
-                <input
-                  type="text"
-                  placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  value={twilioSid}
-                  onChange={(e) => setTwilioSid(e.target.value)}
-                  style={{ width: '100%', background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.4rem 0.6rem', color: '#fff', fontSize: '0.78rem' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '0.2rem' }}>Auth Token:</label>
-                <input
-                  type="password"
-                  placeholder="Enter Auth Token"
-                  value={twilioToken}
-                  onChange={(e) => setTwilioToken(e.target.value)}
-                  style={{ width: '100%', background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.4rem 0.6rem', color: '#fff', fontSize: '0.78rem' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '0.2rem' }}>From Phone Number:</label>
-                <input
-                  type="text"
-                  value={twilioFrom}
-                  onChange={(e) => setTwilioFrom(e.target.value)}
-                  style={{ width: '100%', background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.4rem 0.6rem', color: '#fff', fontSize: '0.78rem' }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* WhatsApp */}
-          <div style={{ background: 'rgba(30, 41, 59, 0.45)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.75rem' }}>
-              <MessageSquare size={16} color="#34d399" />
-              <strong style={{ fontSize: '0.85rem', color: '#fff' }}>Meta WhatsApp Business Cloud API</strong>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '0.2rem' }}>System User Access Token:</label>
-                <input
-                  type="password"
-                  placeholder="EAAGxxxxxxxxxxxxxxxxxxxxxxxx..."
-                  value={whatsappToken}
-                  onChange={(e) => setWhatsappToken(e.target.value)}
-                  style={{ width: '100%', background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.4rem 0.6rem', color: '#fff', fontSize: '0.78rem' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '0.2rem' }}>Phone Number ID:</label>
-                <input
-                  type="text"
-                  placeholder="109283746591029"
-                  value={whatsappPhoneId}
-                  onChange={(e) => setWhatsappPhoneId(e.target.value)}
-                  style={{ width: '100%', background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.4rem 0.6rem', color: '#fff', fontSize: '0.78rem' }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Fast2SMS */}
-          <div style={{ background: 'rgba(30, 41, 59, 0.45)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.75rem' }}>
-              <PhoneCall size={16} color="#fbbf24" />
-              <strong style={{ fontSize: '0.85rem', color: '#fff' }}>Fast2SMS India (TRAI DLT Approved Gateway)</strong>
-            </div>
-
             <div>
-              <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '0.2rem' }}>Fast2SMS Authorization API Key:</label>
-              <input
+              <DialogTitle>API Gateways & Production Dispatch Credentials</DialogTitle>
+              <DialogDescription>
+                Configure live telecom providers for citizen notifications or run in zero-cost high-fidelity simulation.
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        {successMsg && (
+          <div className="flex items-center gap-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 p-3 text-xs text-emerald-300 font-semibold">
+            <CheckCircle2 className="h-4 w-4" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSave} className="space-y-5 pt-2">
+          {/* Dispatch Mode Toggle */}
+          <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                  Carrier Routing Mode
+                </span>
+                <p className="text-xs text-slate-400">
+                  Switch between local sandbox simulation and live telecommunication carrier dispatch.
+                </p>
+              </div>
+              <Badge variant={dispatchMode === 'LIVE_PRODUCTION' ? 'extreme' : 'safe'} className="text-xs font-extrabold px-3 py-1">
+                {dispatchMode}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setDispatchMode('SIMULATION')}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  dispatchMode === 'SIMULATION'
+                    ? 'bg-emerald-500/15 border-emerald-500/50 shadow-md ring-1 ring-emerald-500/30'
+                    : 'bg-slate-900/60 border-white/5 hover:bg-slate-900'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-white">Simulation Mode</span>
+                  {dispatchMode === 'SIMULATION' && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Zero-cost test delivery receipts & exact payload inspection without charging SMS/WhatsApp credits.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDispatchMode('LIVE_PRODUCTION')}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  dispatchMode === 'LIVE_PRODUCTION'
+                    ? 'bg-rose-500/15 border-rose-500/50 shadow-md ring-1 ring-rose-500/30'
+                    : 'bg-slate-900/60 border-white/5 hover:bg-slate-900'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-white">Live Production Mode</span>
+                  {dispatchMode === 'LIVE_PRODUCTION' && <CheckCircle2 className="h-4 w-4 text-rose-400" />}
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Dispatches actual SMS & WhatsApp alerts to live citizen handsets through configured carrier gateways.
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* Twilio SMS API */}
+          <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Smartphone className="h-4 w-4 text-cyan-400" />
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                Twilio Cloud SMS Gateway
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="text-[11px] font-semibold text-slate-300 block mb-1">Account SID</label>
+                <Input
+                  type="password"
+                  value={twilioSid}
+                  onChange={e => setTwilioSid(e.target.value)}
+                  placeholder="ACxxxxxxxxxxxxxxxx"
+                  className="text-xs font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold text-slate-300 block mb-1">Auth Token</label>
+                <Input
+                  type="password"
+                  value={twilioToken}
+                  onChange={e => setTwilioToken(e.target.value)}
+                  placeholder="••••••••••••••••"
+                  className="text-xs font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold text-slate-300 block mb-1">From Sender ID / Number</label>
+                <Input
+                  value={twilioFrom}
+                  onChange={e => setTwilioFrom(e.target.value)}
+                  placeholder="+1844HEATGRD"
+                  className="text-xs font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* WhatsApp Cloud API */}
+          <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-emerald-400" />
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                Meta WhatsApp Business Cloud API
+              </h4>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-semibold text-slate-300 block mb-1">System User Access Token</label>
+                <Input
+                  type="password"
+                  value={whatsappToken}
+                  onChange={e => setWhatsappToken(e.target.value)}
+                  placeholder="EAAGxxxxxxxxxxxxxxxx"
+                  className="text-xs font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold text-slate-300 block mb-1">Phone Number ID</label>
+                <Input
+                  value={whatsappPhoneId}
+                  onChange={e => setWhatsappPhoneId(e.target.value)}
+                  placeholder="104928374619283"
+                  className="text-xs font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Fast2SMS India */}
+          <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-amber-400" />
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                Fast2SMS India (National DLT / Direct SMS)
+              </h4>
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-slate-300 block mb-1">Authorization API Key</label>
+              <Input
                 type="password"
-                placeholder="Enter Fast2SMS API key"
                 value={fast2smsKey}
-                onChange={(e) => setFast2smsKey(e.target.value)}
-                style={{ width: '100%', background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.4rem 0.6rem', color: '#fff', fontSize: '0.78rem' }}
+                onChange={e => setFast2smsKey(e.target.value)}
+                placeholder="5b0K9UZaq86exHrNPOyWDkfwt2scg7MSoFi..."
+                className="text-xs font-mono"
               />
             </div>
           </div>
 
-          {successMsg && (
-            <div style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid #10b981',
-              color: '#34d399',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '6px',
-              fontSize: '0.74rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}>
-              <CheckCircle2 size={16} />
-              {successMsg}
-            </div>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                background: 'rgba(255,255,255,0.08)',
-                color: '#cbd5e1',
-                border: 'none',
-                padding: '0.55rem 1.1rem',
-                borderRadius: '8px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" type="button" onClick={onClose} className="text-xs border-white/10">
               Cancel
-            </button>
-
-            <button
+            </Button>
+            <Button
+              variant="cyan"
+              size="sm"
               type="submit"
               disabled={loading}
-              style={{
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                color: '#fff',
-                border: 'none',
-                padding: '0.55rem 1.35rem',
-                borderRadius: '8px',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                boxShadow: '0 4px 15px rgba(16, 185, 129, 0.35)'
-              }}
+              className="gap-2 text-xs font-semibold"
             >
-              <Save size={16} />
-              {loading ? 'Saving Settings...' : 'Save Configuration'}
-            </button>
+              <Save className="h-4 w-4" />
+              <span>{loading ? 'Saving...' : 'Save Configuration'}</span>
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  X, 
   Database, 
   Cpu, 
   Calculator, 
   BrainCircuit, 
   Radio, 
-  RefreshCw, 
   ArrowRight, 
   CheckCircle,
   Sparkles,
   TrendingUp,
+  RefreshCw,
   FileCheck
 } from 'lucide-react';
 import { API_BASE, apiFetch } from '../api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Input } from './ui/input';
 
 interface MethodologyModalProps {
   isOpen: boolean;
@@ -31,20 +34,18 @@ export const MethodologyModal: React.FC<MethodologyModalProps> = ({ isOpen, onCl
 
   useEffect(() => {
     if (isOpen) {
-      apiFetch(`${API_BASE}/feedback/logs`)
+      apiFetch('/feedback/logs')
         .then(res => res.json())
         .then(data => setFeedbackLogs(data))
         .catch(console.error);
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const handleSubmitFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmittingFeedback(true);
     try {
-      const res = await apiFetch(`${API_BASE}/feedback/submit`, {
+      const res = await apiFetch('/feedback/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -69,354 +70,222 @@ export const MethodologyModal: React.FC<MethodologyModalProps> = ({ isOpen, onCl
     {
       num: 1,
       title: 'DATA ACQUISITION',
-      subtitle: 'Weather, Demography, Population & Public Health',
+      subtitle: 'Weather, Demography & Public Health',
       icon: Database,
-      color: '#38bdf8',
-      desc: 'Ingests IMD official station standards, ERA5 30-year climate reanalysis baseline (1991-2020), Open-Meteo live hourly NWP stream, NCMRWF 4km ensemble NWP predictions, and IMD-NCDC Heat-Related Illness surveillance registers.'
+      color: 'text-cyan-400',
+      bgGlow: 'bg-cyan-500/10 border-cyan-500/20',
+      desc: 'Ingests IMD official station standards, ERA5 30-year climate reanalysis normals (1991-2020), Open-Meteo live hourly NWP, NCMRWF 4km ensemble predictions, and IMD-NCDC Heat-Related Illness registers.'
     },
     {
       num: 2,
-      title: 'PRE PROCESSING',
-      subtitle: 'Clean, Align & Scale Data',
+      title: 'PRE-PROCESSING',
+      subtitle: 'Clean, Align & Psychrometric Scale',
       icon: Cpu,
-      color: '#818cf8',
-      desc: 'Normalizes asynchronous sensor intervals, fills missing psychrometric parameters via Magnus-Tetens dewpoint derivation, performs spatial interpolation across ward centroids, and standardizes demographic census tracts.'
+      color: 'text-indigo-400',
+      bgGlow: 'bg-indigo-500/10 border-indigo-500/20',
+      desc: 'Normalizes sensor intervals, derives psychrometric parameters via Magnus-Tetens dewpoint equations, performs spatial interpolation across ward centroids, and standardizes demographic census tracts.'
     },
     {
       num: 3,
       title: 'COMPUTATION',
-      subtitle: 'WBGT, UTCI, Heat Index & Risk Assessment',
+      subtitle: 'WBGT, UTCI, Heat Index & Strains',
       icon: Calculator,
-      color: '#f59e0b',
-      desc: 'Computes physiological human heat stress: Stull (2011) Wet Bulb (Tw), Liljegren black globe equilibrium (Tg), Outdoor WBGT (0.7Tw+0.2Tg+0.1Td), Universal Thermal Climate Index (UTCI), Rothfusz Heat Index, and Excess Heat Factor (EHF).'
+      color: 'text-amber-400',
+      bgGlow: 'bg-amber-500/10 border-amber-500/20',
+      desc: 'Solves physical heat balance: Stull (2011) Wet Bulb (Tw), Liljegren black globe equilibrium (Tg), Outdoor WBGT (0.7Tw+0.2Tg+0.1Td), Universal Thermal Climate Index (UTCI), and Excess Heat Factor (EHF).'
     },
     {
       num: 4,
       title: 'MODEL PREDICTION',
-      subtitle: 'Heatwave Prediction, Location-Based Risk',
+      subtitle: 'Surrogate Machine Learning Engine',
       icon: BrainCircuit,
-      color: '#ec4899',
-      desc: 'AI Risk Engine combines physiological indices with ward-level vulnerability weights (Elderly & Children %, Outdoor Labor %, Informal Tin-Roof Housing %, and NDVI canopy deficiency) to forecast hospital admission surge 3-5 days ahead.'
+      color: 'text-pink-400',
+      bgGlow: 'bg-pink-500/10 border-pink-500/20',
+      desc: 'Blends biometeorological stress with ward vulnerability weights (Elderly & Children %, Outdoor Labor %, Informal Tin-Roof Housing %, and NDVI canopy deficit) to predict hospital admission surges 3-5 days in advance.'
     },
     {
       num: 5,
-      title: 'ALERTS & ACTIONS',
-      subtitle: 'GIS Alerts, Automated Advisories',
+      title: 'DECISION SUPPORT',
+      subtitle: 'Human-in-the-Loop & Multi-Channel Action',
       icon: Radio,
-      color: '#ef4444',
-      desc: 'Dispatches 4-tier actions (Safe, Moderate, Severe, Extreme) tailored across 5 roles: Citizens, ASHA health workers, employers/gig workers, emergency hospitals, and power utilities via Twilio SMS, WhatsApp Business, Fast2SMS & SACHET CAP XML.'
-    },
-    {
-      num: 6,
-      title: 'SYSTEM FEEDBACK & IMPROVEMENT',
-      subtitle: 'Closed-Loop Calibration Back to Pre-Processing',
-      icon: RefreshCw,
-      color: '#10b981',
-      desc: 'Post-event verification compares predicted hospital admissions with actual ground-truth health registers, updating surrogate model loss and refining ward vulnerability weights.'
+      color: 'text-emerald-400',
+      bgGlow: 'bg-emerald-500/10 border-emerald-500/20',
+      desc: 'Provides certified meteorologists a review portal to verify and calibrate warnings before multi-channel dissemination: WhatsApp Business, SMS, Fast2SMS, NDMA SACHET CAP v1.2 XML, and Municipal HAPs.'
     }
   ];
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(5, 8, 16, 0.85)',
-      backdropFilter: 'blur(12px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 2000,
-      padding: '1rem'
-    }}>
-      <div className="glass-panel" style={{
-        width: '100%',
-        maxWidth: '1000px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        position: 'relative',
-        padding: '2rem',
-        border: '1px solid rgba(255,255,255,0.14)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.75)'
-      }}>
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '1.25rem',
-            right: '1.25rem',
-            background: 'rgba(255,255,255,0.08)',
-            border: 'none',
-            color: '#94a3b8',
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer'
-          }}
-        >
-          <X size={18} />
-        </button>
-
-        {/* Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-            padding: '0.65rem',
-            borderRadius: '10px'
-          }}>
-            <Sparkles size={24} color="#fff" />
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <DialogTitle>Methodology, Mathematical Formulations & Architecture</DialogTitle>
+              <DialogDescription>
+                ISO 7243 WBGT, Universal Thermal Climate Index (UTCI), and Closed-Loop Epidemiological Feedback.
+              </DialogDescription>
+            </div>
           </div>
-          <div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 800, color: '#fff' }}>
-              ThermalGuard Methodology & Architectural Workflow
-            </h2>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Directly aligned with the proposed system architecture and innovation standards
-            </p>
-          </div>
-        </div>
+        </DialogHeader>
 
-        {/* 6 Methodology Steps Flowchart */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1rem',
-          marginBottom: '2rem'
-        }}>
-          {steps.map(s => {
-            const Icon = s.icon;
-            return (
-              <div
-                key={s.num}
-                style={{
-                  background: 'rgba(15, 23, 42, 0.65)',
-                  border: `1px solid ${s.color}33`,
-                  borderLeft: `4px solid ${s.color}`,
-                  borderRadius: '10px',
-                  padding: '1rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.45rem'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <span style={{
-                      background: s.color,
-                      color: '#fff',
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
-                      width: '20px',
-                      height: '20px',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      {s.num}
-                    </span>
-                    <strong style={{ fontSize: '0.85rem', color: '#fff' }}>{s.title}</strong>
+        {/* 5-Step Pipeline Flow */}
+        <div className="space-y-3 pt-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-300 block">
+            5-Stage End-to-End Early Warning Architecture
+          </span>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-2.5">
+            {steps.map(step => {
+              const Icon = step.icon;
+              return (
+                <div
+                  key={step.num}
+                  className={`rounded-xl border p-3 flex flex-col justify-between ${step.bgGlow}`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-mono font-bold text-slate-400">0{step.num}</span>
+                      <Icon className={`h-4 w-4 ${step.color}`} />
+                    </div>
+                    <h5 className="text-xs font-bold text-white leading-tight mb-1">{step.title}</h5>
+                    <p className="text-[10px] text-slate-300 font-medium mb-2">{step.subtitle}</p>
+                    <p className="text-[10px] text-slate-400 leading-normal">{step.desc}</p>
                   </div>
-                  <Icon size={18} color={s.color} />
                 </div>
-                <span style={{ fontSize: '0.72rem', color: s.color, fontWeight: 600 }}>
-                  ({s.subtitle})
-                </span>
-                <p style={{ fontSize: '0.74rem', color: '#cbd5e1', lineHeight: 1.45, marginTop: '2px' }}>
-                  {s.desc}
-                </p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        {/* Closed-Loop System Feedback & Improvement Interactive Section */}
-        <div style={{
-          background: 'rgba(15, 23, 42, 0.75)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '12px',
-          padding: '1.25rem',
-          marginBottom: '1rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-            <RefreshCw size={18} color="#10b981" />
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>
-              Step 6: System Feedback & Improvement Loop
-            </h3>
-            <span style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              color: '#34d399',
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              padding: '0.15rem 0.5rem',
-              borderRadius: '4px'
-            }}>
-              Active Machine Learning Calibration
-            </span>
+        {/* Mathematical Formulas Card */}
+        <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 space-y-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <Calculator className="h-3.5 w-3.5 text-amber-400" />
+            Core Psychrometric & Biometeorological Formulations
+          </span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div className="rounded-xl bg-slate-900/80 border border-white/5 p-3 space-y-1">
+              <span className="font-bold text-cyan-300">1. Outdoor WBGT (ISO 7243)</span>
+              <p className="font-mono text-[11px] text-slate-300 bg-black/40 p-1.5 rounded border border-white/5">
+                WBGT = 0.7·Tw + 0.2·Tg + 0.1·Td
+              </p>
+              <p className="text-[10px] text-slate-400">Where Tw is Stull natural wet bulb, Tg is black globe equilibrium, Td is dry ambient.</p>
+            </div>
+
+            <div className="rounded-xl bg-slate-900/80 border border-white/5 p-3 space-y-1">
+              <span className="font-bold text-orange-300">2. UTCI Equivalent Temp</span>
+              <p className="font-mono text-[11px] text-slate-300 bg-black/40 p-1.5 rounded border border-white/5">
+                UTCI = Ta + Offset(Ta, Tmrt, va, pa)
+              </p>
+              <p className="text-[10px] text-slate-400">Multi-node human thermoregulation model quantifying physiological strain.</p>
+            </div>
+
+            <div className="rounded-xl bg-slate-900/80 border border-white/5 p-3 space-y-1">
+              <span className="font-bold text-pink-300">3. Hospital ER Surge Function</span>
+              <p className="font-mono text-[11px] text-slate-300 bg-black/40 p-1.5 rounded border border-white/5">
+                Surge% = β₀ + β₁(WBGT-28) + β₂·Vuln
+              </p>
+              <p className="text-[10px] text-slate-400">Calibrated against NCDC Heat-Related Illness surveillance registers.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Closed-Loop Feedback Section */}
+        <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <RefreshCw className="h-3.5 w-3.5 text-emerald-400" />
+                System Feedback & Model Self-Calibration Loop
+              </span>
+              <p className="text-xs text-slate-400">
+                Ground truth observations from municipal emergency rooms continuously train and calibrate the AI surrogate model.
+              </p>
+            </div>
+            {feedbackSuccess && (
+              <Badge variant="safe" className="gap-1 text-xs">
+                <CheckCircle className="h-3.5 w-3.5" />
+                <span>Calibrated into ML Pipeline!</span>
+              </Badge>
+            )}
           </div>
 
-          <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginBottom: '1rem', lineHeight: 1.4 }}>
-            In accordance with the feedback arrow in the workflow diagram, ground-truth hospital admission registers from the NCDC surveillance network are compared against pre-event AI surge predictions to recalculate loss residuals and fine-tune model parameters.
-          </p>
-
-          {/* Form */}
-          <form onSubmit={handleSubmitFeedback} style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '0.85rem',
-            background: 'rgba(0,0,0,0.25)',
-            padding: '1rem',
-            borderRadius: '8px',
-            marginBottom: '1rem'
-          }}>
+          <form onSubmit={handleSubmitFeedback} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
-              <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '0.2rem' }}>
-                Event Ward:
-              </label>
-              <input
-                type="text"
+              <label className="text-[11px] font-semibold text-slate-300 block mb-1">Ward Name</label>
+              <Input
                 value={wardName}
-                onChange={(e) => setWardName(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'rgba(30, 41, 59, 0.8)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '6px',
-                  padding: '0.4rem 0.6rem',
-                  color: '#fff',
-                  fontSize: '0.78rem'
-                }}
+                onChange={e => setWardName(e.target.value)}
+                className="text-xs"
               />
             </div>
-
             <div>
-              <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '0.2rem' }}>
-                AI Predicted Surge (%):
-              </label>
-              <input
+              <label className="text-[11px] font-semibold text-slate-300 block mb-1">Predicted Surge %</label>
+              <Input
                 type="number"
-                step="0.1"
                 value={predictedSurge}
-                onChange={(e) => setPredictedSurge(Number(e.target.value))}
-                style={{
-                  width: '100%',
-                  background: 'rgba(30, 41, 59, 0.8)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '6px',
-                  padding: '0.4rem 0.6rem',
-                  color: '#fff',
-                  fontSize: '0.78rem'
-                }}
+                onChange={e => setPredictedSurge(Number(e.target.value))}
+                className="text-xs"
               />
             </div>
-
             <div>
-              <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '0.2rem' }}>
-                Actual Hospital Surge (%):
-              </label>
-              <input
+              <label className="text-[11px] font-semibold text-slate-300 block mb-1">Actual Observed %</label>
+              <Input
                 type="number"
-                step="0.1"
                 value={actualSurge}
-                onChange={(e) => setActualSurge(Number(e.target.value))}
-                style={{
-                  width: '100%',
-                  background: 'rgba(30, 41, 59, 0.8)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: '6px',
-                  padding: '0.4rem 0.6rem',
-                  color: '#fff',
-                  fontSize: '0.78rem'
-                }}
+                onChange={e => setActualSurge(Number(e.target.value))}
+                className="text-xs"
               />
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <button
+            <div className="flex items-end">
+              <Button
+                variant="gradient"
                 type="submit"
                 disabled={submittingFeedback}
-                style={{
-                  width: '100%',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '0.45rem 0.85rem',
-                  borderRadius: '6px',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.4rem'
-                }}
+                className="w-full text-xs font-semibold"
               >
-                <RefreshCw size={14} />
-                {submittingFeedback ? 'Calibrating...' : 'Log & Recalibrate Model'}
-              </button>
+                {submittingFeedback ? 'Calibrating...' : 'Submit Calibration'}
+              </Button>
             </div>
           </form>
 
-          {feedbackSuccess && (
-            <div style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid #10b981',
-              color: '#34d399',
-              fontSize: '0.74rem',
-              padding: '0.45rem 0.75rem',
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              marginBottom: '1rem'
-            }}>
-              <CheckCircle size={15} />
-              Hospital admissions ground-truth registered! AI loss recalculated and weights updated into surrogate pipeline.
-            </div>
-          )}
-
-          {/* Historical Calibration Log Table */}
-          <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem' }}>
-              <thead>
-                <tr style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-subtle)', textAlign: 'left' }}>
-                  <th style={{ padding: '0.4rem' }}>Date</th>
-                  <th style={{ padding: '0.4rem' }}>Ward</th>
-                  <th style={{ padding: '0.4rem' }}>AI Predicted</th>
-                  <th style={{ padding: '0.4rem' }}>Actual Surge</th>
-                  <th style={{ padding: '0.4rem' }}>Accuracy</th>
-                  <th style={{ padding: '0.4rem' }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {feedbackLogs.map((log, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <td style={{ padding: '0.4rem', color: '#94a3b8' }}>{log.event_date}</td>
-                    <td style={{ padding: '0.4rem', color: '#fff', fontWeight: 600 }}>{log.ward_name}</td>
-                    <td style={{ padding: '0.4rem', color: '#f87171' }}>+{log.predicted_surge_pct}%</td>
-                    <td style={{ padding: '0.4rem', color: '#fb923c' }}>+{log.actual_hospital_surge_pct}%</td>
-                    <td style={{ padding: '0.4rem', color: '#34d399', fontWeight: 700 }}>{log.accuracy_pct}%</td>
-                    <td style={{ padding: '0.4rem' }}>
-                      <span style={{
-                        background: 'rgba(16, 185, 129, 0.12)',
-                        color: '#34d399',
-                        padding: '0.1rem 0.35rem',
-                        borderRadius: '4px',
-                        fontSize: '0.65rem'
-                      }}>
-                        {log.calibrated_status}
-                      </span>
-                    </td>
+          {/* Feedback Log Table */}
+          <div className="rounded-xl border border-white/5 bg-slate-900/80 overflow-hidden">
+            <div className="overflow-x-auto max-h-[160px]">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] border-b border-white/5">
+                  <tr>
+                    <th className="p-2.5">Date</th>
+                    <th className="p-2.5">Ward</th>
+                    <th className="p-2.5">Predicted</th>
+                    <th className="p-2.5">Observed</th>
+                    <th className="p-2.5">Accuracy</th>
+                    <th className="p-2.5">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {feedbackLogs.map((log, idx) => (
+                    <tr key={idx} className="hover:bg-white/5">
+                      <td className="p-2.5 font-mono text-slate-400">{log.event_date}</td>
+                      <td className="p-2.5 font-semibold text-white">{log.ward_name}</td>
+                      <td className="p-2.5 text-cyan-300">+{log.predicted_surge_pct}%</td>
+                      <td className="p-2.5 text-rose-300">+{log.actual_hospital_surge_pct}%</td>
+                      <td className="p-2.5 font-bold text-emerald-400">{log.accuracy_pct}%</td>
+                      <td className="p-2.5">
+                        <Badge variant="outline" className="text-[9px] border-emerald-500/30 text-emerald-300 bg-emerald-500/10">
+                          {log.calibrated_status || 'CONVERGED'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

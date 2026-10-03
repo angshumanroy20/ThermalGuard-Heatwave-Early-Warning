@@ -12,6 +12,8 @@ import {
   AlertTriangle 
 } from 'lucide-react';
 import { RoleAdvisories, WardRisk } from '../types';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
+import { Badge } from './ui/badge';
 
 interface RoleAdvisoryPortalProps {
   advisories: RoleAdvisories | null;
@@ -34,230 +36,168 @@ export const RoleAdvisoryPortal: React.FC<RoleAdvisoryPortalProps> = ({
       label: 'General Citizens',
       icon: Users,
       data: advisories.citizens,
-      color: '#38bdf8'
+      color: '#38bdf8',
+      bgGlow: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
     },
     {
       id: 'asha',
       label: 'ASHA Healthcare Workers',
       icon: HeartHandshake,
       data: advisories.asha_workers,
-      color: '#c084fc'
+      color: '#c084fc',
+      bgGlow: 'bg-purple-500/10 text-purple-400 border-purple-500/30'
     },
     {
       id: 'workers',
       label: 'Employers & Outdoor Labor',
       icon: Briefcase,
       data: advisories.outdoor_workers,
-      color: '#f59e0b'
+      color: '#f59e0b',
+      bgGlow: 'bg-amber-500/10 text-amber-400 border-amber-500/30'
     },
     {
       id: 'hospitals',
       label: 'Hospitals & Emergency Care',
       icon: Hospital,
       data: advisories.hospitals,
-      color: '#ec4899'
+      color: '#ec4899',
+      bgGlow: 'bg-pink-500/10 text-pink-400 border-pink-500/30'
     },
     {
       id: 'utilities',
       label: 'Municipal & Power Utilities',
       icon: Building,
       data: advisories.municipal_utilities,
-      color: '#10b981'
+      color: '#10b981',
+      bgGlow: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
     }
   ];
 
   const currentRoleConfig = roleConfigs.find(r => r.id === activeRole) || roleConfigs[0];
   const roleData = currentRoleConfig.data;
 
+  const getTierVariant = (tier?: string) => {
+    switch (tier) {
+      case 'EXTREME': return 'extreme';
+      case 'SEVERE': return 'severe';
+      case 'MODERATE': return 'moderate';
+      default: return 'safe';
+    }
+  };
+
   return (
-    <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+    <Card className="border-white/10 bg-slate-900/80 shadow-2xl backdrop-blur-xl mb-8">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ShieldAlert size={20} color={risk.tier_color} />
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', fontWeight: 800, color: '#fff' }}>
-              Targeted Role-Specific Action Portals
-            </h3>
-            <span style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              color: '#94a3b8',
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              padding: '0.15rem 0.5rem',
-              borderRadius: '4px'
-            }}>
-              Innovation & Guideline-Based Prevention
-            </span>
-          </div>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-            Actionable protocols calibrated for <strong>{wardName}</strong> under <strong>{risk.tier}</strong> warning conditions.
-          </p>
-        </div>
-
-        <div style={{
-          background: risk.tier === 'EXTREME' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(249, 115, 22, 0.2)',
-          border: `1px solid ${risk.tier_color}`,
-          color: risk.tier_color,
-          padding: '0.35rem 0.75rem',
-          borderRadius: '6px',
-          fontSize: '0.75rem',
-          fontWeight: 700,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.35rem'
-        }}>
-          <Clock size={14} />
-          Lead Time: T - 72 Hours Preventive Action
-        </div>
-      </div>
-
-      {/* Role Navigation Tabs */}
-      <div style={{
-        display: 'flex',
-        gap: '0.5rem',
-        borderBottom: '1px solid var(--border-subtle)',
-        paddingBottom: '0.75rem',
-        overflowX: 'auto',
-        marginBottom: '1.25rem'
-      }}>
-        {roleConfigs.map(role => {
-          const Icon = role.icon;
-          const isActive = activeRole === role.id;
-          return (
-            <button
-              key={role.id}
-              onClick={() => setActiveRole(role.id as any)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                background: isActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                color: isActive ? '#fff' : 'var(--text-muted)',
-                border: isActive ? `1px solid ${role.color}` : '1px solid transparent',
-                padding: '0.5rem 0.9rem',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Icon size={16} color={isActive ? role.color : 'var(--text-dim)'} />
-              {role.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Selected Role Content View */}
-      <div style={{
-        background: 'rgba(15, 23, 42, 0.6)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: '10px',
-        padding: '1.25rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+      <div className="border-b border-white/10 bg-slate-950/60 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>
-              {roleData.title}
-            </h4>
-            <span style={{ fontSize: '0.74rem', color: currentRoleConfig.color }}>
-              Designated Role: {currentRoleConfig.label}
-            </span>
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-orange-400" />
+              <h3 className="text-xl font-bold tracking-tight text-white font-display">
+                Targeted Role-Specific Action Portals
+              </h3>
+              <Badge variant="outline" className="text-xs text-slate-300 border-white/15">
+                NDMA HAP 2026 Guidelines
+              </Badge>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Precision advisories and operational action directives calibrated for <strong className="text-slate-200">{wardName}</strong> under <strong className="text-rose-400">{risk.tier}</strong> warning conditions.
+            </p>
           </div>
-          <span style={{
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: `1px solid ${currentRoleConfig.color}`,
-            color: currentRoleConfig.color,
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            padding: '0.2rem 0.65rem',
-            borderRadius: '999px'
-          }}>
-            {roleData.badge}
-          </span>
+
+          <Badge variant={getTierVariant(risk.tier)} className="text-xs uppercase font-extrabold px-3 py-1">
+            Active Warning: {risk.tier}
+          </Badge>
+        </div>
+      </div>
+
+      <CardContent className="p-5 space-y-6">
+        {/* Role Selector Tabs */}
+        <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
+          {roleConfigs.map(role => {
+            const Icon = role.icon;
+            const isActive = activeRole === role.id;
+            return (
+              <button
+                key={role.id}
+                onClick={() => setActiveRole(role.id as any)}
+                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all border ${
+                  isActive
+                    ? `${role.bgGlow} shadow-lg ring-1 ring-white/10`
+                    : 'bg-slate-950/60 text-slate-400 border-white/5 hover:bg-slate-800/60 hover:text-slate-200'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{role.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Action Items List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {roleData.actions.map((act, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '0.75rem',
-                background: 'rgba(30, 41, 59, 0.55)',
-                padding: '0.85rem 1rem',
-                borderRadius: '8px',
-                borderLeft: `3px solid ${currentRoleConfig.color}`
-              }}
-            >
-              <CheckCircle2 size={18} color={currentRoleConfig.color} style={{ flexShrink: 0, marginTop: '2px' }} />
-              <div>
-                <p style={{ fontSize: '0.82rem', color: '#f1f5f9', lineHeight: 1.5 }}>
-                  {act}
+        {/* Selected Role Content */}
+        {roleData && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Directives Banner */}
+            <div className="lg:col-span-1 rounded-2xl border border-white/10 bg-slate-950/70 p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className={`flex h-12 w-12 items-center justify-center rounded-xl border ${currentRoleConfig.bgGlow}`}>
+                  <currentRoleConfig.icon className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-white">{roleData.title}</h4>
+                  <Badge variant="outline" className="text-[11px] text-cyan-300 border-cyan-500/30 mt-1">
+                    {roleData.badge}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-slate-900/90 border border-white/5 p-4 space-y-2 text-xs">
+                <div className="flex items-center gap-2 text-amber-400 font-semibold">
+                  <Clock className="h-4 w-4" />
+                  <span>Mandatory Hours: 11:30 - 16:00 IST</span>
+                </div>
+                <p className="text-slate-400 leading-relaxed">
+                  Peak diurnal heat strain window. Implement primary non-medical interventions (ORS distribution, shading halts, and cooling relief) immediately.
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-slate-900/90 border border-white/5 p-4 space-y-2 text-xs">
+                <div className="flex items-center gap-2 text-cyan-400 font-semibold">
+                  <Droplet className="h-4 w-4" />
+                  <span>Electrolyte & Hydration Protocol</span>
+                </div>
+                <p className="text-slate-400 leading-relaxed">
+                  Consume 250ml electrolyte/salted lassi/ORS solution every 30 minutes during active periods.
                 </p>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Specialized Guidelines Box for Outdoor Workers if active */}
-        {activeRole === 'workers' && (
-          <div style={{
-            marginTop: '1.25rem',
-            background: 'rgba(245, 158, 11, 0.12)',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
-            padding: '0.9rem',
-            borderRadius: '8px'
-          }}>
-            <h5 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fbbf24', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <AlertTriangle size={15} />
-              ISO 7243 WBGT Work-Rest Standard Matrix:
-            </h5>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.5rem', fontSize: '0.72rem' }}>
-              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.45rem', borderRadius: '4px' }}>
-                <span style={{ color: '#94a3b8' }}>WBGT &lt; 29°C:</span>
-                <strong style={{ display: 'block', color: '#34d399' }}>Standard 100% Shift</strong>
-              </div>
-              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.45rem', borderRadius: '4px' }}>
-                <span style={{ color: '#94a3b8' }}>WBGT 29°C - 31°C:</span>
-                <strong style={{ display: 'block', color: '#fbbf24' }}>45m Work / 15m Rest</strong>
-              </div>
-              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.45rem', borderRadius: '4px' }}>
-                <span style={{ color: '#94a3b8' }}>WBGT 31°C - 32°C:</span>
-                <strong style={{ display: 'block', color: '#fb923c' }}>15m Work / 45m Rest</strong>
-              </div>
-              <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.45rem', borderRadius: '4px' }}>
-                <span style={{ color: '#94a3b8' }}>WBGT &gt; 32°C:</span>
-                <strong style={{ display: 'block', color: '#f87171' }}>FULL WORK STOPPAGE</strong>
+            {/* Checklist of Protocols */}
+            <div className="lg:col-span-2 space-y-3">
+              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <span>Actionable Directives & Operational Directives ({roleData.actions?.length || 0})</span>
+              </h4>
+
+              <div className="space-y-2.5">
+                {(roleData.actions || []).map((action, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-3 rounded-xl border border-white/5 bg-slate-950/50 p-4 transition-colors hover:border-white/15 hover:bg-slate-950/80"
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/15 border border-cyan-500/30 text-xs font-bold text-cyan-400 mt-0.5">
+                      {idx + 1}
+                    </span>
+                    <p className="text-sm text-slate-200 leading-relaxed">
+                      {action}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         )}
-
-        {/* Specialized Rapid Immersion Guide for Hospitals if active */}
-        {activeRole === 'hospitals' && (
-          <div style={{
-            marginTop: '1.25rem',
-            background: 'rgba(236, 72, 153, 0.12)',
-            border: '1px solid rgba(236, 72, 153, 0.3)',
-            padding: '0.9rem',
-            borderRadius: '8px'
-          }}>
-            <h5 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f472b6', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Droplet size={15} />
-              Heat Stroke Clinical Triage Protocol:
-            </h5>
-            <p style={{ fontSize: '0.74rem', color: '#cbd5e1', lineHeight: 1.4 }}>
-              For core body temp &gt; 40°C (104°F) with central nervous system dysfunction: Initiate <strong>Cold Water Immersion (CWI)</strong> within 30 minutes of collapse. Target cooling rate: 0.15°C/min until core temp reaches 38.6°C. Avoid antipyretics (paracetamol/aspirin ineffective in exertional hyperthermia).
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

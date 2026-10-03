@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  X, 
   Printer, 
   Download, 
   FileText, 
@@ -8,9 +7,15 @@ import {
   ShieldAlert, 
   PhoneCall,
   CheckCircle,
-  Clock
+  Clock,
+  Landmark,
+  Hospital
 } from 'lucide-react';
 import { API_BASE, apiFetch } from '../api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Separator } from './ui/separator';
 
 interface HAPReportModalProps {
   isOpen: boolean;
@@ -29,7 +34,7 @@ export const HAPReportModal: React.FC<HAPReportModalProps> = ({
   useEffect(() => {
     if (isOpen && wardId) {
       setLoading(true);
-      apiFetch(`${API_BASE}/reports/hap/${wardId}`)
+      apiFetch(`/reports/hap/${wardId}`)
         .then(res => res.json())
         .then(data => setReport(data))
         .catch(console.error)
@@ -37,226 +42,174 @@ export const HAPReportModal: React.FC<HAPReportModalProps> = ({
     }
   }, [isOpen, wardId]);
 
-  if (!isOpen) return null;
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const getTierVariant = (tier?: string) => {
+    switch (tier) {
+      case 'EXTREME': return 'extreme';
+      case 'SEVERE': return 'severe';
+      case 'MODERATE': return 'moderate';
+      default: return 'safe';
+    }
+  };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(5, 8, 16, 0.85)',
-      backdropFilter: 'blur(12px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 2000,
-      padding: '1rem'
-    }}>
-      <div className="glass-panel" style={{
-        width: '100%',
-        maxWidth: '850px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        position: 'relative',
-        padding: '2rem',
-        border: '1px solid rgba(255,255,255,0.14)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.75)',
-        backgroundColor: '#0b1120'
-      }}>
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '1.25rem',
-            right: '1.25rem',
-            background: 'rgba(255,255,255,0.08)',
-            border: 'none',
-            color: '#94a3b8',
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer'
-          }}
-        >
-          <X size={18} />
-        </button>
-
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-            <div style={{ display: 'inline-block', width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#38bdf8', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-            <p style={{ marginTop: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-              Compiling Municipal Heat Action Plan Executive Brief...
-            </p>
-          </div>
-        ) : report ? (
-          <div>
-            {/* Action Bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <FileText size={20} color="var(--accent-amber)" />
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>
-                  CONFIDENTIAL • MUNICIPAL EXECUTIVE BRIEFING
-                </span>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                <Landmark className="h-5 w-5" />
               </div>
-
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  onClick={() => window.print()}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    color: '#fff',
-                    border: '1px solid var(--border-subtle)',
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '6px',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem'
-                  }}
-                >
-                  <Printer size={14} /> Print Brief
-                </button>
+              <div>
+                <DialogTitle>Municipal Heat Action Plan (HAP) Executive Brief</DialogTitle>
+                <DialogDescription>
+                  NDMA National Guidelines 2026 Compliant Action Plan for Municipal Commissioners & District Magistrates.
+                </DialogDescription>
               </div>
             </div>
 
-            {/* Official Report Document Body */}
-            <div style={{
-              background: '#0f172a',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: '8px',
-              padding: '1.75rem',
-              color: '#f8fafc'
-            }}>
-              {/* Seal & Header */}
-              <div style={{ textAlign: 'center', borderBottom: '2px solid rgba(255,255,255,0.15)', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
-                <span style={{ fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94a3b8' }}>
-                  GOVERNMENT DISASTER MANAGEMENT AUTHORITY & METEOROLOGICAL NETWORK
-                </span>
-                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', fontWeight: 800, color: '#fff', margin: '0.35rem 0' }}>
-                  MUNICIPAL HEAT ACTION PLAN (HAP) EXECUTIVE DIRECTIVE
-                </h2>
-                <span style={{ fontSize: '0.78rem', color: 'var(--accent-amber)', fontWeight: 600 }}>
-                  {report.standard} • Generated: {report.generated_at}
-                </span>
-              </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              className="gap-2 text-xs border-white/10 hover:border-amber-500/50"
+            >
+              <Printer className="h-3.5 w-3.5 text-amber-400" />
+              <span>Print Executive Brief</span>
+            </Button>
+          </div>
+        </DialogHeader>
 
-              {/* Target Location & Warning Tier */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '0.75rem',
-                background: 'rgba(0,0,0,0.3)',
-                padding: '1rem',
-                borderRadius: '8px',
-                marginBottom: '1.25rem'
-              }}>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-700 border-t-amber-400 mb-3" />
+            <h4 className="text-sm font-semibold text-white">Compiling Municipal Directives</h4>
+            <p className="text-xs text-slate-400">Synthesizing ward risk indices with NDMA contingency protocols...</p>
+          </div>
+        ) : report ? (
+          <div className="space-y-6 pt-2">
+            {/* Document Header Banner */}
+            <div className="rounded-2xl border border-white/10 bg-slate-950/80 p-5 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
                 <div>
-                  <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Target Ward & City:</span>
-                  <strong style={{ display: 'block', fontSize: '1rem', color: '#fff' }}>
-                    {report.ward.name}, {report.city}
-                  </strong>
+                  <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest block">
+                    Government of India • National Disaster Management Authority (NDMA)
+                  </span>
+                  <h3 className="text-xl font-black text-white font-display mt-0.5">
+                    Municipal Heatwave Emergency Directive: {report.ward?.name}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    City Jurisdiction: <strong className="text-slate-200">{report.city}</strong> ({report.region_type}) • Timestamp: {report.generated_at}
+                  </p>
                 </div>
-                <div>
-                  <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Assigned Warning Tier:</span>
-                  <strong style={{
-                    display: 'inline-block',
-                    fontSize: '0.95rem',
-                    color: report.heat_stress_evaluation.tier_color,
-                    fontWeight: 800
-                  }}>
-                    {report.heat_stress_evaluation.tier} ALERT ({report.heat_stress_evaluation.metrics.imd_category})
-                  </strong>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Outdoor WBGT / UTCI:</span>
-                  <strong style={{ display: 'block', fontSize: '1rem', color: '#f87171' }}>
-                    {report.heat_stress_evaluation.metrics.wbgt_outdoor_c}°C / {report.heat_stress_evaluation.metrics.utci_c}°C
-                  </strong>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Expected Hospital ER Surge:</span>
-                  <strong style={{ display: 'block', fontSize: '1rem', color: '#f472b6' }}>
-                    +{report.heat_stress_evaluation.expected_hospital_surge_pct}% Admissions
-                  </strong>
+                <div className="text-right">
+                  <Badge variant={getTierVariant(report.heat_stress_evaluation?.tier)} className="text-sm px-3 py-1 uppercase font-black">
+                    {report.heat_stress_evaluation?.tier} ALERT
+                  </Badge>
+                  <span className="text-[11px] text-slate-400 block mt-1">Status: Active Field Enforcement</span>
                 </div>
               </div>
 
-              {/* Departmental Action Directives */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#38bdf8', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Mandatory Inter-Agency Action Directives:
-                </h4>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '0.75rem', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
-                    <strong style={{ fontSize: '0.8rem', color: '#fca5a5' }}>1. Health Department & Tertiary Hospitals:</strong>
-                    <p style={{ fontSize: '0.74rem', color: '#cbd5e1', marginTop: '0.2rem' }}>
-                      {report.action_directives.hospitals.actions.join(' ')}
-                    </p>
-                  </div>
-
-                  <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '0.75rem', borderRadius: '6px', borderLeft: '3px solid #10b981' }}>
-                    <strong style={{ fontSize: '0.8rem', color: '#86efac' }}>2. Municipal Water Supply & Cooling Center Infrastructure:</strong>
-                    <p style={{ fontSize: '0.74rem', color: '#cbd5e1', marginTop: '0.2rem' }}>
-                      {report.action_directives.municipal_utilities.actions.join(' ')}
-                    </p>
-                  </div>
-
-                  <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '0.75rem', borderRadius: '6px', borderLeft: '3px solid #f59e0b' }}>
-                    <strong style={{ fontSize: '0.8rem', color: '#fde047' }}>3. Labor Inspectorate & Gig Platforms:</strong>
-                    <p style={{ fontSize: '0.74rem', color: '#cbd5e1', marginTop: '0.2rem' }}>
-                      {report.action_directives.outdoor_workers.actions.join(' ')}
-                    </p>
-                  </div>
-
-                  <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '0.75rem', borderRadius: '6px', borderLeft: '3px solid #c084fc' }}>
-                    <strong style={{ fontSize: '0.8rem', color: '#d8b4fe' }}>4. Community Healthcare & ASHA Workers:</strong>
-                    <p style={{ fontSize: '0.74rem', color: '#cbd5e1', marginTop: '0.2rem' }}>
-                      {report.action_directives.asha_workers.actions.join(' ')}
-                    </p>
-                  </div>
+              {/* Multi-Metric Table */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
+                <div className="rounded-xl bg-slate-900/90 border border-white/5 p-3">
+                  <span className="text-slate-400 block text-[10px] uppercase">Ambient Max Temp</span>
+                  <span className="text-lg font-bold text-rose-400">{report.heat_stress_evaluation?.metrics?.temp_max_c ?? 46}°C</span>
+                  <span className="text-[10px] text-slate-500 block">IMD Departure: +{report.heat_stress_evaluation?.metrics?.imd_departure_c ?? 5.2}°C</span>
+                </div>
+                <div className="rounded-xl bg-slate-900/90 border border-white/5 p-3">
+                  <span className="text-slate-400 block text-[10px] uppercase">Outdoor WBGT</span>
+                  <span className="text-lg font-bold text-amber-400">{report.heat_stress_evaluation?.metrics?.wbgt_outdoor_c ?? 33.1}°C</span>
+                  <span className="text-[10px] text-slate-500 block">ISO 7243 High Risk Threshold</span>
+                </div>
+                <div className="rounded-xl bg-slate-900/90 border border-white/5 p-3">
+                  <span className="text-slate-400 block text-[10px] uppercase">UTCI Heat Strain</span>
+                  <span className="text-lg font-bold text-orange-400">{report.heat_stress_evaluation?.metrics?.utci_c ?? 44.5}°C</span>
+                  <span className="text-[10px] text-slate-500 block">Strong Multi-Node Stress</span>
+                </div>
+                <div className="rounded-xl bg-slate-900/90 border border-white/5 p-3">
+                  <span className="text-slate-400 block text-[10px] uppercase">Forecasted Hospital Surge</span>
+                  <span className="text-lg font-bold text-pink-400">+{report.heat_stress_evaluation?.expected_hospital_surge_pct ?? 85}%</span>
+                  <span className="text-[10px] text-slate-500 block">NCDC Surveillance Baseline</span>
                 </div>
               </div>
+            </div>
 
-              {/* Emergency Helplines */}
-              <div style={{
-                background: 'rgba(0,0,0,0.3)',
-                padding: '0.85rem 1rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border-subtle)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '0.5rem',
-                fontSize: '0.75rem'
-              }}>
-                <div>
-                  <span style={{ color: '#94a3b8' }}>Disaster Emergency: </span>
-                  <strong style={{ color: '#fff' }}>1077</strong>
+            {/* Emergency Directives */}
+            <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-5 space-y-4">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-amber-400" />
+                <span>Statutory Inter-Agency Directives (NDMA Section 12 Mandate)</span>
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div className="rounded-xl bg-slate-900/80 border border-white/5 p-4 space-y-2">
+                  <h5 className="font-bold text-cyan-300 flex items-center gap-1.5">
+                    <Building2 className="h-4 w-4" /> 1. Municipal Administration & Public Spaces
+                  </h5>
+                  <ul className="list-disc pl-4 space-y-1 text-slate-300 leading-relaxed">
+                    <li>Activate all designated municipal cooling shelters with potable chilled water and ORS packets.</li>
+                    <li>Operate misting cannons at major transit hubs and marketplace centers from 11:30 to 16:30 IST.</li>
+                    <li>Halt outdoor construction and unshaded manual labor between 12:00 PM and 4:00 PM.</li>
+                  </ul>
                 </div>
-                <div>
-                  <span style={{ color: '#94a3b8' }}>Heat Stroke Ambulance: </span>
-                  <strong style={{ color: '#f87171' }}>108</strong>
+
+                <div className="rounded-xl bg-slate-900/80 border border-white/5 p-4 space-y-2">
+                  <h5 className="font-bold text-pink-300 flex items-center gap-1.5">
+                    <Hospital className="h-4 w-4" /> 2. Health Facilities & Hospital Surge
+                  </h5>
+                  <ul className="list-disc pl-4 space-y-1 text-slate-300 leading-relaxed">
+                    <li>Reserve dedicated cold-water immersion tubs and ice packs in emergency casualty wards.</li>
+                    <li>Mobilize ASHA and Anganwadi workers for door-to-door vulnerability checks in informal slum clusters.</li>
+                    <li>Stock adequate IV Normal Saline (0.9%), Ringer's Lactate, and Oral Rehydration Salts.</li>
+                  </ul>
                 </div>
-                <div>
-                  <span style={{ color: '#94a3b8' }}>Water Tanker Helpline: </span>
-                  <strong style={{ color: '#38bdf8' }}>1916</strong>
+              </div>
+            </div>
+
+            {/* Emergency Helplines */}
+            <div className="rounded-xl border border-white/5 bg-slate-950/60 p-4">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                24x7 Emergency Inter-Agency Hotlines
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div className="flex items-center gap-2 rounded-lg bg-slate-900/80 border border-white/5 p-2">
+                  <PhoneCall className="h-3.5 w-3.5 text-rose-400" />
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Disaster Control</span>
+                    <strong className="text-white font-mono">1077</strong>
+                  </div>
                 </div>
-                <div>
-                  <span style={{ color: '#94a3b8' }}>Electricity Grievance: </span>
-                  <strong style={{ color: '#fbbf24' }}>1912</strong>
+                <div className="flex items-center gap-2 rounded-lg bg-slate-900/80 border border-white/5 p-2">
+                  <PhoneCall className="h-3.5 w-3.5 text-pink-400" />
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Ambulance HRI</span>
+                    <strong className="text-white font-mono">108</strong>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg bg-slate-900/80 border border-white/5 p-2">
+                  <PhoneCall className="h-3.5 w-3.5 text-cyan-400" />
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Water Tanker Supply</span>
+                    <strong className="text-white font-mono">1916</strong>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg bg-slate-900/80 border border-white/5 p-2">
+                  <PhoneCall className="h-3.5 w-3.5 text-amber-400" />
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Power Discom</span>
+                    <strong className="text-white font-mono">1912</strong>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         ) : null}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -5,18 +5,23 @@ import {
   Sun, 
   Wind, 
   Droplets, 
-  Activity, 
   Calendar, 
   Send, 
   AlertCircle, 
-  HeartHandshake, 
   Zap,
   TrendingUp,
+  FileText,
+  Hospital,
   ShieldCheck,
-  CheckCircle2,
-  FileText
+  Activity,
+  Flame
 } from 'lucide-react';
-import { WardDetailsResponse, HourlyPoint } from '../types';
+import { WardDetailsResponse } from '../types';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
+import { Progress } from './ui/progress';
+import { Separator } from './ui/separator';
 
 interface WardInspectorProps {
   wardDetails: WardDetailsResponse | null;
@@ -35,33 +40,36 @@ export const WardInspector: React.FC<WardInspectorProps> = ({
 
   if (loading) {
     return (
-      <div className="glass-panel" style={{ padding: '3rem 2rem', textAlign: 'center' }}>
-        <div style={{ display: 'inline-block', width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#38bdf8', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <p style={{ marginTop: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          Computing physiological heat balance & ward vulnerability indices...
+      <Card className="flex flex-col items-center justify-center p-12 text-center border-white/10 bg-slate-900/80 backdrop-blur-xl">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-700 border-t-cyan-400 mb-4" />
+        <h4 className="text-base font-semibold text-white">Computing Multi-Metric Indices</h4>
+        <p className="text-xs text-slate-400 max-w-sm mt-1">
+          Evaluating Stull wet-bulb, Liljegren black globe equilibrium, and demographic heat vulnerability...
         </p>
-      </div>
+      </Card>
     );
   }
 
   if (!wardDetails) {
     return (
-      <div className="glass-panel" style={{ padding: '3rem 2rem', textAlign: 'center' }}>
-        <AlertCircle size={36} color="var(--accent-amber)" style={{ margin: '0 auto 0.75rem auto' }} />
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>No Ward Selected</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginTop: '0.25rem' }}>
-          Click any ward marker on the GIS map or choose from the list to inspect deep physiological stress and 5-day lead time.
+      <Card className="flex flex-col items-center justify-center p-12 text-center border-white/10 bg-slate-900/80 backdrop-blur-xl">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 mb-4">
+          <AlertCircle className="h-7 w-7" />
+        </div>
+        <h3 className="text-lg font-bold text-white">No Ward Selected</h3>
+        <p className="text-xs text-slate-400 max-w-sm mt-1">
+          Select any ward marker on the GIS map or use the search controls to inspect deep biometeorological analytics.
         </p>
-      </div>
+      </Card>
     );
   }
 
-  const { ward, city, current_evaluation, forecast_5days } = wardDetails;
+  const { ward, city, region_type, current_evaluation, forecast_5days } = wardDetails;
   const metrics = current_evaluation?.metrics || {} as any;
   const vuln = current_evaluation?.vulnerability || {} as any;
   const currentForecastDay = forecast_5days?.[selectedDayIdx] || forecast_5days?.[0] || {} as any;
 
-  // Safe Fallback Helpers
+  // Safe Demographic Fallbacks
   const hospitalsCount = ward?.infrastructure?.hospitals_count ?? (ward as any)?.hospitals_count ?? 4;
   const coolingCentersCount = ward?.infrastructure?.cooling_centers_count ?? (ward as any)?.cooling_centers_count ?? 6;
   const powerGridZone = ward?.infrastructure?.power_grid_zone ?? (ward as any)?.power_grid_zone ?? 'City Grid Feeder';
@@ -72,12 +80,12 @@ export const WardInspector: React.FC<WardInspectorProps> = ({
   const childrenPct = ward?.demographics?.children_pct ?? (ward as any)?.children_pct ?? 10;
   const ndviVegetation = ward?.demographics?.ndvi_vegetation ?? (ward as any)?.ndvi_vegetation ?? 0.15;
 
-  // SVG Chart calculation for diurnal curve
+  // Diurnal curve SVG points
   const hourlyData = currentForecastDay?.hourly_profile || [];
-  const maxTemp = Math.max(...hourlyData.map((h: any) => h.temp_c), 45);
+  const maxTemp = Math.max(...hourlyData.map((h: any) => h.temp_c), 46);
   const minTemp = Math.min(...hourlyData.map((h: any) => h.wbgt_c), 20);
-  const chartHeight = 160;
-  const chartWidth = 600;
+  const chartHeight = 140;
+  const chartWidth = 560;
 
   const getSvgY = (val: number) => {
     return chartHeight - ((val - minTemp) / (maxTemp - minTemp || 1)) * (chartHeight - 30) - 15;
@@ -86,376 +94,311 @@ export const WardInspector: React.FC<WardInspectorProps> = ({
   const tempPoints = hourlyData.map((h: any, i: number) => `${(i / Math.max(1, hourlyData.length - 1)) * chartWidth},${getSvgY(h.temp_c)}`).join(' ');
   const wbgtPoints = hourlyData.map((h: any, i: number) => `${(i / Math.max(1, hourlyData.length - 1)) * chartWidth},${getSvgY(h.wbgt_c)}`).join(' ');
 
+  const getTierVariant = (tier?: string) => {
+    switch (tier) {
+      case 'EXTREME': return 'extreme';
+      case 'SEVERE': return 'severe';
+      case 'MODERATE': return 'moderate';
+      default: return 'safe';
+    }
+  };
+
   return (
-    <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
-      {/* Ward Header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        borderBottom: '1px solid var(--border-subtle)',
-        paddingBottom: '1.25rem',
-        marginBottom: '1.25rem'
-      }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, color: '#fff' }}>
-              {ward?.name || 'Selected Ward'}
-            </h2>
-            <span style={{
-              background: current_evaluation?.tier_color || '#ef4444',
-              color: '#fff',
-              fontSize: '0.72rem',
-              fontWeight: 800,
-              padding: '0.2rem 0.65rem',
-              borderRadius: '999px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em'
-            }}>
-              {current_evaluation?.tier || 'ALERT'} ALERT
-            </span>
-            <span style={{
-              background: 'rgba(255,255,255,0.08)',
-              color: '#e2e8f0',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              padding: '0.2rem 0.6rem',
-              borderRadius: '6px'
-            }}>
-              {city} ({wardDetails?.region_type || 'plains'})
-            </span>
+    <Card className="border-white/10 bg-slate-900/80 shadow-2xl backdrop-blur-xl overflow-hidden">
+      {/* Header */}
+      <div className="border-b border-white/10 bg-slate-950/70 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-2xl font-black tracking-tight text-white font-display">
+                {ward?.name || 'Ward Profile'}
+              </h2>
+              <Badge variant={getTierVariant(current_evaluation?.tier)} className="text-xs uppercase font-extrabold px-2.5 py-0.5">
+                {current_evaluation?.tier || 'ALERT'} TIER
+              </Badge>
+              <Badge variant="outline" className="text-xs text-slate-300 border-white/15">
+                {city} • {region_type}
+              </Badge>
+            </div>
+            <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
+              <span>Pop Density: <strong>{ward?.pop_density_sqkm?.toLocaleString() || 15000} /km²</strong></span>
+              <span>•</span>
+              <span>Centroid: {ward?.lat?.toFixed(3)}, {ward?.lon?.toFixed(3)}</span>
+            </p>
           </div>
 
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <span>Pop Density: <strong style={{ color: '#fff' }}>{ward?.pop_density_sqkm?.toLocaleString() || '15,000'} /km²</strong></span>
-            <span>•</span>
-            <span>Hospitals: <strong style={{ color: '#fff' }}>{hospitalsCount}</strong></span>
-            <span>•</span>
-            <span>Cooling Centers: <strong style={{ color: '#fff' }}>{coolingCentersCount} Active</strong></span>
-            <span>•</span>
-            <span>Power Grid: <strong style={{ color: '#cbd5e1' }}>{powerGridZone}</strong></span>
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => onOpenHAPReport(ward.id)}
-            style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              color: '#38bdf8',
-              border: '1px solid rgba(56, 189, 248, 0.35)',
-              padding: '0.55rem 1rem',
-              borderRadius: '8px',
-              fontSize: '0.8rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              transition: 'all 0.2s ease'
-            }}
-            title="Generate official NDMA Municipal Heat Action Plan Executive Brief"
-          >
-            <FileText size={15} />
-            Municipal HAP Brief
-          </button>
-
-          {/* Trigger Alert Dispatch Button */}
-          <button
-            onClick={() => onTriggerAlert(ward.id)}
-            style={{
-              background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
-              color: '#fff',
-              border: 'none',
-              padding: '0.55rem 1.15rem',
-              borderRadius: '8px',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.35)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <Send size={15} />
-            Dispatch Ward Alerts
-          </button>
-        </div>
-      </div>
-
-      {/* Grid: Physiological Indices vs Ward Socioeconomic Vulnerability */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '1.25rem',
-        marginBottom: '1.5rem'
-      }}>
-        {/* Physiological Multi-Index Panel */}
-        <div style={{
-          background: 'rgba(15, 23, 42, 0.6)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '10px',
-          padding: '1.15rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <Sun size={17} color="var(--accent-amber)" />
-              <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>
-                Physiological Thermal Stress Metrics
-              </h3>
-            </div>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>IMD & ECMWF Standard</span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.65rem' }}>
-            <div style={{ background: 'rgba(239, 68, 68, 0.12)', padding: '0.6rem', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
-              <span style={{ fontSize: '0.68rem', color: '#fca5a5', display: 'block' }}>Outdoor WBGT</span>
-              <strong style={{ fontSize: '1.25rem', color: '#f87171' }}>{metrics.wbgt_outdoor_c}°C</strong>
-              <span style={{ fontSize: '0.62rem', color: '#f87171', display: 'block', marginTop: '2px' }}>0.7Tw+0.2Tg+0.1Td</span>
-            </div>
-
-            <div style={{ background: 'rgba(249, 115, 22, 0.12)', padding: '0.6rem', borderRadius: '8px', border: '1px solid rgba(249, 115, 22, 0.25)' }}>
-              <span style={{ fontSize: '0.68rem', color: '#fed7aa', display: 'block' }}>UTCI Stress</span>
-              <strong style={{ fontSize: '1.25rem', color: '#fb923c' }}>{metrics.utci_c}°C</strong>
-              <span style={{ fontSize: '0.62rem', color: '#fb923c', display: 'block', marginTop: '2px' }}>ECMWF Multi-Node</span>
-            </div>
-
-            <div style={{ background: 'rgba(245, 158, 11, 0.12)', padding: '0.6rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
-              <span style={{ fontSize: '0.68rem', color: '#fef08a', display: 'block' }}>NOAA Heat Index</span>
-              <strong style={{ fontSize: '1.25rem', color: '#fbbf24' }}>{metrics.heat_index_c}°C</strong>
-              <span style={{ fontSize: '0.62rem', color: '#fbbf24', display: 'block', marginTop: '2px' }}>Rothfusz Eq.</span>
-            </div>
-
-            <div style={{ background: 'rgba(30, 41, 59, 0.7)', padding: '0.6rem', borderRadius: '8px' }}>
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>Stull Wet-Bulb (Tw)</span>
-              <strong style={{ fontSize: '1.05rem', color: '#fff' }}>{metrics.wet_bulb_tw}°C</strong>
-            </div>
-
-            <div style={{ background: 'rgba(30, 41, 59, 0.7)', padding: '0.6rem', borderRadius: '8px' }}>
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>Globe Temp (Tg)</span>
-              <strong style={{ fontSize: '1.05rem', color: '#fff' }}>{metrics.globe_temp_tg}°C</strong>
-            </div>
-
-            <div style={{ background: 'rgba(30, 41, 59, 0.7)', padding: '0.6rem', borderRadius: '8px' }}>
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block' }}>Excess Heat Factor</span>
-              <strong style={{ fontSize: '1.05rem', color: '#fff' }}>{metrics.ehf_index}</strong>
-            </div>
-          </div>
-
-          <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#94a3b8', background: 'rgba(0,0,0,0.25)', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
-            <strong>IMD Criteria Evaluation:</strong> {metrics.imd_category} (Max: {metrics.temp_max_c}°C, Departure: {metrics.imd_departure_c > 0 ? `+${metrics.imd_departure_c}` : metrics.imd_departure_c}°C vs normal {city})
-          </div>
-        </div>
-
-        {/* Socioeconomic Vulnerability Matrix */}
-        <div style={{
-          background: 'rgba(15, 23, 42, 0.6)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '10px',
-          padding: '1.15rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <Users size={17} color="#a855f7" />
-              <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>
-                Ward Vulnerability & Health Risk
-              </h3>
-            </div>
-            <span style={{
-              background: 'rgba(168, 85, 247, 0.18)',
-              color: '#c084fc',
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              padding: '0.15rem 0.5rem',
-              borderRadius: '4px'
-            }}>
-              Vuln Index: {vuln.vulnerability_score}
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            {/* Outdoor Workers */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', marginBottom: '3px' }}>
-                <span style={{ color: '#cbd5e1' }}>Outdoor Labor & Gig Workforce:</span>
-                <strong style={{ color: '#f87171' }}>{outdoorWorkerPct}%</strong>
-              </div>
-              <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${outdoorWorkerPct}%`, height: '100%', background: '#ef4444', borderRadius: '3px' }} />
-              </div>
-            </div>
-
-            {/* Informal Housing / Heat Traps */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', marginBottom: '3px' }}>
-                <span style={{ color: '#cbd5e1' }}>Informal Slum / Tin-Roof Housing:</span>
-                <strong style={{ color: '#fb923c' }}>{informalHousingPct}%</strong>
-              </div>
-              <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${informalHousingPct}%`, height: '100%', background: '#f97316', borderRadius: '3px' }} />
-              </div>
-            </div>
-
-            {/* Elderly & Children */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', marginBottom: '3px' }}>
-                <span style={{ color: '#cbd5e1' }}>High-Risk Age Groups (&gt;65 &amp; &lt;5 yrs):</span>
-                <strong style={{ color: '#eab308' }}>{(elderlyPct + childrenPct).toFixed(1)}%</strong>
-              </div>
-              <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${(elderlyPct + childrenPct) * 2}%`, height: '100%', background: '#eab308', borderRadius: '3px' }} />
-              </div>
-            </div>
-
-            {/* NDVI Deficiency */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', marginBottom: '3px' }}>
-                <span style={{ color: '#cbd5e1' }}>NDVI Green Canopy Deficiency:</span>
-                <strong style={{ color: '#06b6d4' }}>{(1.0 - ndviVegetation).toFixed(2)} (NDVI: {ndviVegetation})</strong>
-              </div>
-              <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${(1.0 - ndviVegetation) * 100}%`, height: '100%', background: '#06b6d4', borderRadius: '3px' }} />
-              </div>
-            </div>
-          </div>
-
-          <div style={{
-            marginTop: '0.75rem',
-            background: 'rgba(236, 72, 153, 0.12)',
-            border: '1px solid rgba(236, 72, 153, 0.25)',
-            padding: '0.5rem 0.75rem',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
-            <span style={{ fontSize: '0.74rem', color: '#fbcfe8' }}>
-              Projected Emergency Room Admissions Surge:
-            </span>
-            <strong style={{ fontSize: '1.05rem', color: '#f472b6' }}>
-              +{current_evaluation.expected_hospital_surge_pct}%
-            </strong>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenHAPReport(ward.id)}
+              className="gap-1.5 text-xs border-amber-500/30 text-amber-300 hover:bg-amber-500/10 hover:border-amber-500/50"
+            >
+              <FileText className="h-3.5 w-3.5 text-amber-400" />
+              <span>Municipal HAP Brief</span>
+            </Button>
+            <Button
+              variant="gradient"
+              size="sm"
+              onClick={() => onTriggerAlert(ward.id)}
+              className="gap-1.5 text-xs font-semibold"
+            >
+              <Send className="h-3.5 w-3.5" />
+              <span>Dispatch Alert</span>
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* 5-Day Lead Time Forecast Bar (As promised in Innovation Section) */}
-      <div style={{
-        background: 'rgba(15, 23, 42, 0.75)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: '10px',
-        padding: '1.25rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Calendar size={18} color="var(--accent-cyan)" />
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>
-              5-Day Ward-Level Lead Time & Diurnal Heat Curve
-            </h3>
-          </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-            Empowering 3-5 days lead-time preventive action before heat peaks
-          </span>
-        </div>
-
-        {/* 5-Day Tabs */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-          gap: '0.6rem',
-          marginBottom: '1.25rem'
-        }}>
-          {forecast_5days.map((day, idx) => {
-            const isSelected = selectedDayIdx === idx;
-            const dayEval = day.risk_eval;
-            return (
-              <button
-                key={day.day_index}
-                onClick={() => setSelectedDayIdx(idx)}
-                style={{
-                  background: isSelected ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                  border: isSelected ? `2px solid ${dayEval.tier_color}` : '1px solid var(--border-subtle)',
-                  borderRadius: '8px',
-                  padding: '0.6rem 0.5rem',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>
-                  {idx === 0 ? 'Today' : day.day_name.slice(0, 3)} ({day.date.slice(5)})
-                </span>
-                <strong style={{ fontSize: '1rem', color: dayEval.tier_color, display: 'block', margin: '2px 0' }}>
-                  {dayEval.tier}
-                </strong>
-                <span style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>
-                  WBGT: {dayEval.metrics.wbgt_outdoor_c}°C
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* 24-Hour Diurnal Profile SVG Chart */}
+      <CardContent className="p-5 space-y-6">
+        {/* 5-Day Lead Time Forecast Selector */}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.72rem', color: '#94a3b8' }}>
-            <span>Hourly Diurnal Trajectory for {currentForecastDay.day_name} ({currentForecastDay.date})</span>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span style={{ width: '12px', height: '3px', backgroundColor: '#f87171' }} /> Air Temp (°C)
-              </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <span style={{ width: '12px', height: '3px', backgroundColor: '#38bdf8' }} /> WBGT Outdoor (°C)
-              </span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-300">
+              <Calendar className="h-3.5 w-3.5 text-cyan-400" />
+              <span>5-Day Predictive Lead Time</span>
+            </div>
+            <span className="text-[11px] text-cyan-400 font-medium">NCMRWF 4km + ERA5 Surrogate</span>
+          </div>
+
+          <div className="grid grid-cols-5 gap-2">
+            {(forecast_5days || []).map((day, idx) => {
+              const isSelected = selectedDayIdx === idx;
+              const dayEval = day.risk_eval;
+              const t = dayEval?.tier || 'SAFE';
+              
+              return (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedDayIdx(idx)}
+                  className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all border text-center ${
+                    isSelected
+                      ? 'bg-slate-800 border-cyan-500 shadow-md ring-1 ring-cyan-500/40'
+                      : 'bg-slate-950/60 border-white/5 hover:bg-slate-800/60 hover:border-white/15'
+                  }`}
+                >
+                  <span className="text-[11px] font-bold text-slate-300">
+                    {idx === 0 ? 'Today' : day.day_name?.slice(0, 3)}
+                  </span>
+                  <span className="text-[10px] text-slate-400 mb-1">{day.date?.slice(5)}</span>
+                  <Badge 
+                    variant={getTierVariant(t)}
+                    className="text-[9px] px-1.5 py-0 font-extrabold uppercase"
+                  >
+                    {t}
+                  </Badge>
+                  <span className="text-[11px] font-bold text-slate-200 mt-1">
+                    {dayEval?.metrics?.temp_max_c?.toFixed(1) || '42.0'}°C
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Diurnal 24-Hour Profile Chart */}
+        <div className="rounded-xl border border-white/10 bg-slate-950/60 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-cyan-400" />
+                <span className="text-xs font-bold text-white uppercase tracking-wider">
+                  24-Hour Diurnal Heat Profile ({currentForecastDay?.day_name || 'Day'})
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Continuous diurnal cycle correlating Dry-Bulb Air Temp (°C) and Wet-Bulb Globe Temp (WBGT °C)
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-4 text-xs font-medium">
+              <div className="flex items-center gap-1.5">
+                <span className="h-2 w-3 rounded-full bg-rose-500" />
+                <span className="text-slate-300">Dry-Bulb Ambient (°C)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="h-2 w-3 rounded-full bg-cyan-400" />
+                <span className="text-slate-300">Outdoor WBGT (°C)</span>
+              </div>
             </div>
           </div>
 
-          <div style={{ width: '100%', overflowX: 'auto', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', padding: '0.75rem' }}>
-            <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{ width: '100%', height: '140px', overflow: 'visible' }}>
-              {/* Reference Grid lines */}
-              <line x1="0" y1={getSvgY(32)} x2={chartWidth} y2={getSvgY(32)} stroke="rgba(239,68,68,0.35)" strokeDasharray="4 4" />
-              <text x="5" y={getSvgY(32) - 4} fill="#f87171" fontSize="10">ISO 7243 WBGT Extreme Risk (32°C)</text>
+          {/* SVG Diurnal Curve */}
+          <div className="w-full overflow-hidden">
+            <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-36">
+              <defs>
+                <linearGradient id="tempGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity="0.0" />
+                </linearGradient>
+                <linearGradient id="wbgtGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
 
-              <line x1="0" y1={getSvgY(28)} x2={chartWidth} y2={getSvgY(28)} stroke="rgba(245,158,11,0.25)" strokeDasharray="4 4" />
-              <text x="5" y={getSvgY(28) - 4} fill="#fbbf24" fontSize="10">WBGT Caution (28°C)</text>
+              {/* Grid lines */}
+              <line x1="0" y1={chartHeight - 15} x2={chartWidth} y2={chartHeight - 15} stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
+              <line x1="0" y1={chartHeight / 2} x2={chartWidth} y2={chartHeight / 2} stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
+              <line x1="0" y1="15" x2={chartWidth} y2="15" stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
 
-              {/* Temperature Line */}
-              <polyline
-                fill="none"
-                stroke="#f87171"
-                strokeWidth="2.5"
-                points={tempPoints}
-              />
+              {/* Area Fills */}
+              {tempPoints && (
+                <polygon
+                  points={`0,${chartHeight - 15} ${tempPoints} ${chartWidth},${chartHeight - 15}`}
+                  fill="url(#tempGradient)"
+                />
+              )}
 
-              {/* WBGT Line */}
-              <polyline
-                fill="none"
-                stroke="#38bdf8"
-                strokeWidth="2.5"
-                points={wbgtPoints}
-              />
+              {wbgtPoints && (
+                <polygon
+                  points={`0,${chartHeight - 15} ${wbgtPoints} ${chartWidth},${chartHeight - 15}`}
+                  fill="url(#wbgtGradient)"
+                />
+              )}
 
-              {/* Data point dots and hour markers */}
-              {hourlyData.filter((_, i) => i % 3 === 0).map((h, i) => {
-                const x = ((i * 3) / (hourlyData.length - 1)) * chartWidth;
-                return (
-                  <g key={i}>
-                    <line x1={x} y1="0" x2={x} y2={chartHeight - 15} stroke="rgba(255,255,255,0.06)" />
-                    <text x={x} y={chartHeight} fill="#64748b" fontSize="9" textAnchor="middle">{h.hour}</text>
-                    <circle cx={x} cy={getSvgY(h.temp_c)} r="3" fill="#f87171" />
-                    <circle cx={x} cy={getSvgY(h.wbgt_c)} r="3" fill="#38bdf8" />
-                  </g>
-                );
-              })}
+              {/* Trend Lines */}
+              {tempPoints && (
+                <polyline
+                  fill="none"
+                  stroke="#ef4444"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  points={tempPoints}
+                />
+              )}
+
+              {wbgtPoints && (
+                <polyline
+                  fill="none"
+                  stroke="#22d3ee"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  points={wbgtPoints}
+                />
+              )}
             </svg>
+            <div className="flex justify-between text-[10px] text-slate-500 font-mono pt-1 px-1">
+              <span>00:00 (Night)</span>
+              <span>06:00 (Dawn)</span>
+              <span>12:00 (Noon)</span>
+              <span>15:00 (Peak Heat)</span>
+              <span>18:00 (Dusk)</span>
+              <span>23:00 (Night)</span>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+
+        {/* 6 Key Biometeorological & Health Risk Metrics */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Outdoor WBGT</span>
+            <div className="text-xl font-extrabold text-rose-400 mt-0.5">{metrics.wbgt_outdoor_c ?? 32.5}°C</div>
+            <span className="text-[10px] text-rose-300">ISO 7243 High Risk</span>
+          </div>
+
+          <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">UTCI Stress</span>
+            <div className="text-xl font-extrabold text-orange-400 mt-0.5">{metrics.utci_c ?? 42.1}°C</div>
+            <span className="text-[10px] text-orange-300">Very Strong Heat</span>
+          </div>
+
+          <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Heat Index</span>
+            <div className="text-xl font-extrabold text-amber-400 mt-0.5">{metrics.heat_index_c ?? 48.4}°C</div>
+            <span className="text-[10px] text-amber-300">Danger Zone</span>
+          </div>
+
+          <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Humidity (RH)</span>
+            <div className="text-xl font-extrabold text-cyan-400 mt-0.5">{metrics.rel_humidity_pct ?? 38}%</div>
+            <span className="text-[10px] text-cyan-300">Dewpoint: {metrics.dew_point_td ?? 22}°C</span>
+          </div>
+
+          <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Solar Radiation</span>
+            <div className="text-xl font-extrabold text-amber-300 mt-0.5">{metrics.solar_radiation_wm2 ?? 850} W/m²</div>
+            <span className="text-[10px] text-amber-400">Peak UV Flux</span>
+          </div>
+
+          <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Expected Surge</span>
+            <div className="text-xl font-extrabold text-pink-400 mt-0.5">+{current_evaluation?.expected_hospital_surge_pct ?? 45}%</div>
+            <span className="text-[10px] text-pink-300">ER Admissions</span>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Socioeconomic Vulnerability & Resilience Factors */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-purple-400" />
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                Ward Demographic & Urban Microclimate Vulnerabilities
+              </h4>
+            </div>
+            <span className="text-xs font-bold text-purple-300">
+              Vulnerability Index: {((vuln.vulnerability_score || 0.58) * 100).toFixed(0)}/100
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3 space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">Outdoor Laborers</span>
+                <span className="font-bold text-amber-400">{outdoorWorkerPct}%</span>
+              </div>
+              <Progress value={outdoorWorkerPct} indicatorClassName="bg-amber-500" />
+              <p className="text-[10px] text-slate-400">Direct solar exposure and manual metabolic load</p>
+            </div>
+
+            <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3 space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">Informal / Tin Roofing</span>
+                <span className="font-bold text-rose-400">{informalHousingPct}%</span>
+              </div>
+              <Progress value={informalHousingPct} indicatorClassName="bg-rose-500" />
+              <p className="text-[10px] text-slate-400">Low thermal inertia trapping lethal indoor heat</p>
+            </div>
+
+            <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3 space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">Elderly & Children</span>
+                <span className="font-bold text-pink-400">{elderlyPct + childrenPct}%</span>
+              </div>
+              <Progress value={elderlyPct + childrenPct} indicatorClassName="bg-pink-500" />
+              <p className="text-[10px] text-slate-400">High thermoregulatory physiological sensitivity</p>
+            </div>
+
+            <div className="rounded-xl border border-white/5 bg-slate-950/60 p-3 space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">NDVI Green Canopy</span>
+                <span className="font-bold text-emerald-400">{(ndviVegetation * 100).toFixed(0)}%</span>
+              </div>
+              <Progress value={ndviVegetation * 100} indicatorClassName="bg-emerald-500" />
+              <p className="text-[10px] text-slate-400">Urban heat island mitigation & shading index</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Municipal Infrastructure Assets */}
+        <div className="rounded-xl border border-white/5 bg-slate-950/40 p-3 flex flex-wrap items-center justify-between gap-4 text-xs">
+          <div className="flex items-center gap-2">
+            <Hospital className="h-4 w-4 text-cyan-400" />
+            <span className="text-slate-300">Designated HRI Hospitals: <strong className="text-white">{hospitalsCount} Facilities</strong></span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-emerald-400" />
+            <span className="text-slate-300">Active Cooling Centers: <strong className="text-white">{coolingCentersCount} Centers</strong></span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4 text-amber-400" />
+            <span className="text-slate-300">Power Grid Zone: <strong className="text-white">{powerGridZone}</strong></span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

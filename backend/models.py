@@ -11,13 +11,22 @@ Implements:
 
 import math
 from typing import Dict, Any, List
-from .algorithms import (
-    calculate_wbgt_outdoor,
-    calculate_utci,
-    calculate_heat_index,
-    calculate_ehf,
-    evaluate_imd_criteria
-)
+try:
+    from .algorithms import (
+        calculate_wbgt_outdoor,
+        calculate_utci,
+        calculate_heat_index,
+        calculate_ehf,
+        evaluate_imd_criteria
+    )
+except ImportError:
+    from algorithms import (
+        calculate_wbgt_outdoor,
+        calculate_utci,
+        calculate_heat_index,
+        calculate_ehf,
+        evaluate_imd_criteria
+    )
 
 class AIRiskEngine:
     """

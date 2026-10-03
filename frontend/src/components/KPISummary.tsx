@@ -1,6 +1,8 @@
 import React from 'react';
-import { ThermometerSun, AlertTriangle, Users, Hospital, ShieldCheck } from 'lucide-react';
+import { ThermometerSun, AlertTriangle, Hospital, ShieldCheck, Users, Flame, Activity } from 'lucide-react';
 import { WardSummary } from '../types';
+import { Card, CardContent } from './ui/card';
+import { Badge } from './ui/badge';
 
 interface KPISummaryProps {
   wards: WardSummary[];
@@ -9,14 +11,13 @@ interface KPISummaryProps {
 export const KPISummary: React.FC<KPISummaryProps> = ({ wards }) => {
   if (!wards.length) return null;
 
-  // Compute key statistics
+  // Compute summary stats
   let peakWbgt = -999;
   let peakUtci = -999;
   let peakWbgtWard = '';
-  let totalPopAtRisk = 0;
   let maxHospitalSurge = 0;
   
-  const tierCounts = {
+  const tierCounts: { [key: string]: number } = {
     SAFE: 0,
     MODERATE: 0,
     SEVERE: 0,
@@ -24,9 +25,9 @@ export const KPISummary: React.FC<KPISummaryProps> = ({ wards }) => {
   };
 
   wards.forEach(w => {
-    const wbgt = w.risk.metrics.wbgt_outdoor_c;
-    const utci = w.risk.metrics.utci_c;
-    const surge = w.risk.expected_hospital_surge_pct;
+    const wbgt = w.risk?.metrics?.wbgt_outdoor_c ?? 0;
+    const utci = w.risk?.metrics?.utci_c ?? 0;
+    const surge = w.risk?.expected_hospital_surge_pct ?? 0;
     
     if (wbgt > peakWbgt) {
       peakWbgt = wbgt;
@@ -38,139 +39,124 @@ export const KPISummary: React.FC<KPISummaryProps> = ({ wards }) => {
     if (surge > maxHospitalSurge) {
       maxHospitalSurge = surge;
     }
-    if (w.risk.tier === 'SEVERE' || w.risk.tier === 'EXTREME') {
-      totalPopAtRisk += w.pop_density_sqkm * 12; // Approx ward population
-    }
-    tierCounts[w.risk.tier] = (tierCounts[w.risk.tier] || 0) + 1;
+    const t = w.risk?.tier || 'SAFE';
+    tierCounts[t] = (tierCounts[t] || 0) + 1;
   });
 
   return (
-    <div className="kpi-container" style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-      gap: '1rem',
-      marginBottom: '1.25rem'
-    }}>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
       {/* Peak WBGT Card */}
-      <div className="glass-panel" style={{ padding: '1.1rem 1.25rem', borderLeft: '4px solid #ef4444' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-              Peak Outdoor WBGT
-            </span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '0.2rem' }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.85rem', fontWeight: 800, color: '#f87171' }}>
-                {peakWbgt.toFixed(1)}°C
+      <Card className="relative overflow-hidden border-l-4 border-l-rose-500 bg-slate-900/80 backdrop-blur-xl border-t-white/10 border-r-white/10 border-b-white/10 shadow-xl transition-all duration-300 hover:translate-y-[-2px] hover:border-l-rose-400">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Peak Outdoor WBGT
               </span>
-              <span style={{ fontSize: '0.75rem', color: '#fca5a5' }}>
-                (ISO 7243 High Risk)
-              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold tracking-tight text-rose-400 font-display">
+                  {peakWbgt.toFixed(1)}°C
+                </span>
+                <Badge variant="extreme" className="text-[10px] py-0 px-1.5">
+                  ISO 7243 High
+                </Badge>
+              </div>
+              <p className="text-xs text-slate-400 truncate max-w-[210px]" title={peakWbgtWard}>
+                Ward: <span className="text-slate-200 font-medium">{peakWbgtWard}</span>
+              </p>
             </div>
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '0.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Ward: {peakWbgtWard}
-            </p>
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
+              <ThermometerSun className="h-6 w-6" />
+            </div>
           </div>
-          <div style={{
-            background: 'rgba(239, 68, 68, 0.15)',
-            padding: '0.6rem',
-            borderRadius: '10px'
-          }}>
-            <ThermometerSun size={22} color="#ef4444" />
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Peak UTCI Thermal Strain */}
-      <div className="glass-panel" style={{ padding: '1.1rem 1.25rem', borderLeft: '4px solid #f97316' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-              Peak UTCI Thermal Strain
-            </span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '0.2rem' }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.85rem', fontWeight: 800, color: '#fb923c' }}>
-                {peakUtci.toFixed(1)}°C
+      {/* Peak UTCI Card */}
+      <Card className="relative overflow-hidden border-l-4 border-l-orange-500 bg-slate-900/80 backdrop-blur-xl border-t-white/10 border-r-white/10 border-b-white/10 shadow-xl transition-all duration-300 hover:translate-y-[-2px] hover:border-l-orange-400">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Peak UTCI Strain
               </span>
-              <span style={{ fontSize: '0.75rem', color: '#fed7aa' }}>
-                Very Strong Stress
-              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold tracking-tight text-orange-400 font-display">
+                  {peakUtci.toFixed(1)}°C
+                </span>
+                <Badge variant="severe" className="text-[10px] py-0 px-1.5">
+                  Severe Stress
+                </Badge>
+              </div>
+              <p className="text-xs text-slate-400">
+                Multi-node biometeorological load
+              </p>
             </div>
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>
-              Multi-node physiological heat load
-            </p>
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
           </div>
-          <div style={{
-            background: 'rgba(249, 115, 22, 0.15)',
-            padding: '0.6rem',
-            borderRadius: '10px'
-          }}>
-            <AlertTriangle size={22} color="#f97316" />
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Forecasted Hospital Surge */}
-      <div className="glass-panel" style={{ padding: '1.1rem 1.25rem', borderLeft: '4px solid #ec4899' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-              Peak Hospital ER Surge
-            </span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '0.2rem' }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.85rem', fontWeight: 800, color: '#f472b6' }}>
-                +{maxHospitalSurge.toFixed(0)}%
+      {/* Peak Hospital Surge Card */}
+      <Card className="relative overflow-hidden border-l-4 border-l-pink-500 bg-slate-900/80 backdrop-blur-xl border-t-white/10 border-r-white/10 border-b-white/10 shadow-xl transition-all duration-300 hover:translate-y-[-2px] hover:border-l-pink-400">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Peak Hospital ER Surge
               </span>
-              <span style={{ fontSize: '0.75rem', color: '#fbcfe8' }}>
-                Emergency Influx
-              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold tracking-tight text-pink-400 font-display">
+                  +{maxHospitalSurge.toFixed(0)}%
+                </span>
+                <Badge className="text-[10px] py-0 px-1.5 bg-pink-500/15 text-pink-300 border-pink-500/30">
+                  Surge Load
+                </Badge>
+              </div>
+              <p className="text-xs text-slate-400">
+                NCDC HRI epidemiological model
+              </p>
             </div>
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>
-              NCDC Heat-Related Illness projection
-            </p>
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400">
+              <Hospital className="h-6 w-6" />
+            </div>
           </div>
-          <div style={{
-            background: 'rgba(236, 72, 153, 0.15)',
-            padding: '0.6rem',
-            borderRadius: '10px'
-          }}>
-            <Hospital size={22} color="#ec4899" />
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Ward Alert Tier Distribution */}
-      <div className="glass-panel" style={{ padding: '1.1rem 1.25rem', borderLeft: '4px solid #06b6d4' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div style={{ width: '100%' }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-              Monitored Wards Status
-            </span>
-            <div style={{
-              display: 'flex',
-              gap: '0.5rem',
-              marginTop: '0.5rem',
-              alignItems: 'center'
-            }}>
-              <div style={{ textAlign: 'center', flex: 1, background: 'rgba(239, 68, 68, 0.15)', padding: '0.35rem 0.2rem', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-                <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f87171', display: 'block' }}>{tierCounts.EXTREME}</span>
-                <span style={{ fontSize: '0.62rem', color: '#fca5a5', fontWeight: 600 }}>EXTREME</span>
+      <Card className="relative overflow-hidden border-l-4 border-l-cyan-500 bg-slate-900/80 backdrop-blur-xl border-t-white/10 border-r-white/10 border-b-white/10 shadow-xl transition-all duration-300 hover:translate-y-[-2px] hover:border-l-cyan-400">
+        <CardContent className="p-4 sm:p-5">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Monitored Wards Status ({wards.length})
+              </span>
+              <Activity className="h-4 w-4 text-cyan-400" />
+            </div>
+            <div className="grid grid-cols-4 gap-1.5 pt-1">
+              <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-2 text-center">
+                <div className="text-lg font-bold text-emerald-400">{tierCounts.SAFE || 0}</div>
+                <div className="text-[10px] text-emerald-300 font-medium">Safe</div>
               </div>
-              <div style={{ textAlign: 'center', flex: 1, background: 'rgba(249, 115, 22, 0.15)', padding: '0.35rem 0.2rem', borderRadius: '6px', border: '1px solid rgba(249, 115, 22, 0.3)' }}>
-                <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fb923c', display: 'block' }}>{tierCounts.SEVERE}</span>
-                <span style={{ fontSize: '0.62rem', color: '#fed7aa', fontWeight: 600 }}>SEVERE</span>
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-2 text-center">
+                <div className="text-lg font-bold text-amber-400">{tierCounts.MODERATE || 0}</div>
+                <div className="text-[10px] text-amber-300 font-medium">Mod</div>
               </div>
-              <div style={{ textAlign: 'center', flex: 1, background: 'rgba(245, 158, 11, 0.15)', padding: '0.35rem 0.2rem', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-                <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fbbf24', display: 'block' }}>{tierCounts.MODERATE}</span>
-                <span style={{ fontSize: '0.62rem', color: '#fef08a', fontWeight: 600 }}>MODERATE</span>
+              <div className="rounded-lg bg-orange-500/10 border border-orange-500/20 p-2 text-center">
+                <div className="text-lg font-bold text-orange-400">{tierCounts.SEVERE || 0}</div>
+                <div className="text-[10px] text-orange-300 font-medium">Sev</div>
               </div>
-              <div style={{ textAlign: 'center', flex: 1, background: 'rgba(16, 185, 129, 0.15)', padding: '0.35rem 0.2rem', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#34d399', display: 'block' }}>{tierCounts.SAFE}</span>
-                <span style={{ fontSize: '0.62rem', color: '#a7f3d0', fontWeight: 600 }}>SAFE</span>
+              <div className="rounded-lg bg-rose-500/15 border border-rose-500/30 p-2 text-center">
+                <div className="text-lg font-bold text-rose-400">{tierCounts.EXTREME || 0}</div>
+                <div className="text-[10px] text-rose-300 font-bold">Ext</div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -1,5 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { Button } from './ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/card';
 
 interface Props {
   children: ReactNode;
@@ -27,58 +29,38 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          minHeight: '100vh',
-          backgroundColor: '#0a0f1d',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '2rem',
-          fontFamily: 'system-ui, sans-serif'
-        }}>
-          <div style={{
-            maxWidth: '550px',
-            background: 'rgba(17, 24, 39, 0.9)',
-            border: '1px solid rgba(239, 68, 68, 0.4)',
-            borderRadius: '12px',
-            padding: '2rem',
-            textAlign: 'center',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)'
-          }}>
-            <AlertTriangle size={42} color="#ef4444" style={{ margin: '0 auto 1rem auto' }} />
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-              ThermalGuard Component Notice
-            </h2>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.25rem', lineHeight: 1.5 }}>
-              A temporary display error occurred while rendering data: <br />
-              <code style={{ color: '#f87171', background: 'rgba(0,0,0,0.4)', padding: '0.2rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem' }}>
-                {this.state.error?.message}
-              </code>
-            </p>
-            <button
-              onClick={() => {
-                this.setState({ hasError: false, error: null });
-                window.location.reload();
-              }}
-              style={{
-                background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
-                color: '#fff',
-                border: 'none',
-                padding: '0.6rem 1.25rem',
-                borderRadius: '8px',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem'
-              }}
-            >
-              <RefreshCw size={15} />
-              Reload Platform
-            </button>
-          </div>
+        <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+          <Card className="max-w-lg w-full border-red-500/40 bg-slate-900/90 shadow-2xl backdrop-blur-xl">
+            <CardHeader className="text-center pb-2">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400">
+                <AlertTriangle className="h-7 w-7" />
+              </div>
+              <CardTitle className="justify-center text-xl font-bold text-white">
+                Platform Diagnostic Notice
+              </CardTitle>
+              <CardDescription className="text-slate-400 text-sm">
+                A rendering anomaly was safely captured by the client boundary.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-2">
+              <div className="rounded-lg bg-black/40 border border-white/5 p-3 text-xs text-rose-300 font-mono break-words">
+                {this.state.error?.message || 'Unknown runtime error'}
+              </div>
+            </CardContent>
+            <CardFooter className="justify-center pt-2">
+              <Button
+                variant="cyan"
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.reload();
+                }}
+                className="gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Reload Dashboard
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
       );
     }

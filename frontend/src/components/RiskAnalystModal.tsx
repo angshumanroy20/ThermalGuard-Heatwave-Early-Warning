@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
 import { 
-  X, 
   UserCheck, 
   AlertTriangle, 
   CheckCircle2, 
   ShieldCheck, 
-  Flame, 
   Send, 
-  Radio, 
-  History 
+  History,
+  Activity,
+  Sparkles,
+  Layers,
+  ThermometerSun
 } from 'lucide-react';
 import { AnalystReviewItem, ApprovedBroadcastItem } from '../types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Card, CardContent } from './ui/card';
+import { Input } from './ui/input';
 
 interface RiskAnalystModalProps {
   isOpen: boolean;
@@ -36,8 +42,6 @@ export const RiskAnalystModal: React.FC<RiskAnalystModalProps> = ({
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
 
-  if (!isOpen) return null;
-
   const currentReview = pendingReviews.find(r => r.id === selectedReviewId) || pendingReviews[0];
 
   const handleApprove = async () => {
@@ -52,7 +56,6 @@ export const RiskAnalystModal: React.FC<RiskAnalystModalProps> = ({
       );
       setCalibratedTier('');
       setAnalystNotes('');
-      // If there are more pending, select next
       const remaining = pendingReviews.filter(r => r.id !== currentReview.id);
       if (remaining.length > 0) {
         setSelectedReviewId(remaining[0].id);
@@ -62,398 +65,247 @@ export const RiskAnalystModal: React.FC<RiskAnalystModalProps> = ({
     }
   };
 
+  const getTierVariant = (tier?: string) => {
+    switch (tier) {
+      case 'EXTREME': return 'extreme';
+      case 'SEVERE': return 'severe';
+      case 'MODERATE': return 'moderate';
+      default: return 'safe';
+    }
+  };
+
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(5, 8, 16, 0.85)',
-      backdropFilter: 'blur(12px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 2000,
-      padding: '1rem'
-    }}>
-      <div className="glass-panel" style={{
-        width: '100%',
-        maxWidth: '920px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        position: 'relative',
-        padding: '1.75rem',
-        border: '1px solid rgba(255,255,255,0.14)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.75)'
-      }}>
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '1.25rem',
-            right: '1.25rem',
-            background: 'rgba(255,255,255,0.08)',
-            border: 'none',
-            color: '#94a3b8',
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer'
-          }}
-        >
-          <X size={18} />
-        </button>
-
-        {/* Modal Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
-          <div style={{
-            background: 'rgba(59, 130, 246, 0.2)',
-            padding: '0.6rem',
-            borderRadius: '10px',
-            border: '1px solid rgba(59, 130, 246, 0.35)'
-          }}>
-            <UserCheck size={24} color="#60a5fa" />
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400">
+              <UserCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <DialogTitle>Human-in-the-Loop Risk Analyst Review Portal</DialogTitle>
+              <DialogDescription>
+                Verification queue where certified meteorologists review AI Risk Engine assessments before alerts are dispatched.
+              </DialogDescription>
+            </div>
           </div>
-          <div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', fontWeight: 800, color: '#fff' }}>
-              Risk Analyst Approval Portal (Human-in-the-Loop)
-            </h2>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Direct implementation of AI Risk Engine workflow: Output for Review → Analyst Verification → Dispatched Warnings
-            </p>
-          </div>
-        </div>
+        </DialogHeader>
 
-        {/* Tabs: Pending Queue vs Broadcast History */}
-        <div style={{ display: 'flex', gap: '0.75rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
-          <button
+        {/* Tab Switcher */}
+        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
+          <Button
+            variant={activeTab === 'pending' ? 'default' : 'ghost'}
+            size="sm"
             onClick={() => setActiveTab('pending')}
-            style={{
-              background: activeTab === 'pending' ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
-              color: activeTab === 'pending' ? '#f87171' : 'var(--text-muted)',
-              border: activeTab === 'pending' ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid transparent',
-              padding: '0.4rem 0.85rem',
-              borderRadius: '6px',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
+            className="gap-2 text-xs"
           >
-            <AlertTriangle size={15} />
-            Pending AI Risk Forecasts ({pendingReviews.length})
-          </button>
-
-          <button
+            <AlertTriangle className="h-3.5 w-3.5" />
+            <span>Pending Approvals ({pendingReviews.length})</span>
+          </Button>
+          <Button
+            variant={activeTab === 'history' ? 'default' : 'ghost'}
+            size="sm"
             onClick={() => setActiveTab('history')}
-            style={{
-              background: activeTab === 'history' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
-              color: activeTab === 'history' ? '#34d399' : 'var(--text-muted)',
-              border: activeTab === 'history' ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid transparent',
-              padding: '0.4rem 0.85rem',
-              borderRadius: '6px',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
+            className="gap-2 text-xs"
           >
-            <History size={15} />
-            Dispatched Broadcast History ({approvedBroadcasts.length})
-          </button>
+            <History className="h-3.5 w-3.5" />
+            <span>Broadcast Audit Log ({approvedBroadcasts.length})</span>
+          </Button>
         </div>
 
         {activeTab === 'pending' ? (
-          <div>
-            {pendingReviews.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '3rem 1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '10px' }}>
-                <CheckCircle2 size={42} color="#10b981" style={{ margin: '0 auto 0.75rem auto' }} />
-                <h4 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 700 }}>All AI Forecasts Approved!</h4>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                  No high-risk warnings are currently pending human-in-the-loop review.
-                </p>
+          pendingReviews.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 mb-3 border border-emerald-500/20">
+                <CheckCircle2 className="h-6 w-6" />
               </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '1.25rem' }}>
-                {/* List of items */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '420px', overflowY: 'auto' }}>
-                  {pendingReviews.map(item => {
-                    const isSelected = item.id === (currentReview?.id || '');
+              <h4 className="text-base font-bold text-white">All Clear! No Reviews Pending</h4>
+              <p className="text-xs text-slate-400 max-w-sm mt-1">
+                The surrogate AI risk engine queue is currently clear. Any high-risk forecasts automatically populate this queue.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* Queue sidebar */}
+              <div className="md:col-span-1 space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Queue Items ({pendingReviews.length})
+                </span>
+                <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
+                  {pendingReviews.map(review => {
+                    const isSelected = (currentReview && currentReview.id === review.id) || selectedReviewId === review.id;
                     return (
-                      <div
-                        key={item.id}
-                        onClick={() => setSelectedReviewId(item.id)}
-                        style={{
-                          background: isSelected ? 'rgba(59, 130, 246, 0.15)' : 'rgba(30, 41, 59, 0.5)',
-                          border: isSelected ? '1px solid #3b82f6' : '1px solid var(--border-subtle)',
-                          borderRadius: '8px',
-                          padding: '0.75rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
-                        }}
+                      <button
+                        key={review.id}
+                        onClick={() => setSelectedReviewId(review.id)}
+                        className={`w-full text-left p-3 rounded-xl border transition-all ${
+                          isSelected
+                            ? 'bg-slate-900 border-purple-500 shadow-lg ring-1 ring-purple-500/30'
+                            : 'bg-slate-950/60 border-white/5 hover:bg-slate-900/60 hover:border-white/15'
+                        }`}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                          <strong style={{ fontSize: '0.85rem', color: '#fff' }}>{item.ward_name}</strong>
-                          <span style={{
-                            background: item.ai_tier === 'EXTREME' ? '#ef4444' : item.ai_tier === 'SEVERE' ? '#f97316' : '#f59e0b',
-                            color: '#fff',
-                            fontSize: '0.65rem',
-                            fontWeight: 800,
-                            padding: '0.1rem 0.45rem',
-                            borderRadius: '999px'
-                          }}>
-                            {item.ai_tier}
-                          </span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-white truncate max-w-[130px]">{review.ward_name}</span>
+                          <Badge variant={getTierVariant(review.ai_tier)} className="text-[9px] py-0 px-1.5 uppercase">
+                            {review.ai_tier}
+                          </Badge>
                         </div>
-                        <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                          {item.city} • AI Score: <strong style={{ color: '#f87171' }}>{item.ai_risk_score}/100</strong>
-                        </p>
-                        <p style={{ fontSize: '0.68rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>
-                          Surge: +{item.predicted_surge_pct}% • {item.created_at}
-                        </p>
-                      </div>
+                        <div className="text-[11px] text-slate-400 mt-1 flex justify-between">
+                          <span>{review.city}</span>
+                          <span className="font-semibold text-rose-400">Score: {review.ai_risk_score}</span>
+                        </div>
+                      </button>
                     );
                   })}
                 </div>
+              </div>
 
-                {/* Inspector & Approval Form for Selected Item */}
-                {currentReview && (
-                  <div style={{
-                    background: 'rgba(15, 23, 42, 0.7)',
-                    border: '1px solid var(--border-subtle)',
-                    borderRadius: '10px',
-                    padding: '1.25rem'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.85rem' }}>
-                      <div>
-                        <span style={{ fontSize: '0.68rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Review ID: {currentReview.id}</span>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', marginTop: '2px' }}>
-                          {currentReview.ward_name} ({currentReview.city})
-                        </h3>
-                      </div>
-                      <span style={{
-                        background: 'rgba(239, 68, 68, 0.2)',
-                        color: '#f87171',
-                        border: '1px solid rgba(239, 68, 68, 0.4)',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '4px'
-                      }}>
-                        AI Proposed: {currentReview.ai_tier}
-                      </span>
+              {/* Review Workspace */}
+              {currentReview && (
+                <div className="md:col-span-2 rounded-2xl border border-white/10 bg-slate-950/70 p-5 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+                    <div>
+                      <h3 className="text-lg font-bold text-white">{currentReview.ward_name}</h3>
+                      <p className="text-xs text-slate-400">{currentReview.city} • Queue ID: <span className="font-mono text-cyan-400">{currentReview.id}</span></p>
+                    </div>
+                    <Badge variant={getTierVariant(currentReview.ai_tier)} className="text-xs font-bold uppercase px-2.5 py-0.5">
+                      AI Tier: {currentReview.ai_tier}
+                    </Badge>
+                  </div>
+
+                  {/* AI Metrics Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div className="rounded-xl border border-white/5 bg-slate-900/80 p-2.5">
+                      <span className="text-[10px] text-slate-400 block">Ambient Temp</span>
+                      <strong className="text-base text-rose-400">{currentReview.metrics?.temp_max_c ?? 46.5}°C</strong>
+                    </div>
+                    <div className="rounded-xl border border-white/5 bg-slate-900/80 p-2.5">
+                      <span className="text-[10px] text-slate-400 block">Outdoor WBGT</span>
+                      <strong className="text-base text-amber-400">{currentReview.metrics?.wbgt_outdoor_c ?? 33.2}°C</strong>
+                    </div>
+                    <div className="rounded-xl border border-white/5 bg-slate-900/80 p-2.5">
+                      <span className="text-[10px] text-slate-400 block">UTCI Stress</span>
+                      <strong className="text-base text-orange-400">{currentReview.metrics?.utci_c ?? 44.8}°C</strong>
+                    </div>
+                    <div className="rounded-xl border border-white/5 bg-slate-900/80 p-2.5">
+                      <span className="text-[10px] text-slate-400 block">Surge Forecast</span>
+                      <strong className="text-base text-pink-400">+{currentReview.predicted_surge_pct ?? 102}%</strong>
+                    </div>
+                  </div>
+
+                  {/* Surrogate AI notes */}
+                  <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 text-xs text-purple-200">
+                    <span className="font-bold flex items-center gap-1.5 mb-1 text-purple-300">
+                      <Sparkles className="h-3.5 w-3.5" /> AI Engine Decision Rationale:
+                    </span>
+                    {currentReview.analyst_notes || 'High outdoor workforce exposure combined with severe tin-roof microclimates requires immediate operational verification.'}
+                  </div>
+
+                  {/* Analyst Input Form */}
+                  <div className="space-y-3 pt-2">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-300 block mb-1">
+                        Authorizing Meteorologist Name
+                      </label>
+                      <Input
+                        value={analystName}
+                        onChange={(e) => setAnalystName(e.target.value)}
+                        placeholder="e.g. Dr. V. K. Nair"
+                        className="text-xs"
+                      />
                     </div>
 
-                    {/* Meteorological Breakdown */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(3, 1fr)',
-                      gap: '0.5rem',
-                      background: 'rgba(0,0,0,0.3)',
-                      padding: '0.65rem',
-                      borderRadius: '8px',
-                      fontSize: '0.72rem',
-                      marginBottom: '1rem'
-                    }}>
-                      <div>
-                        <span style={{ color: 'var(--text-muted)' }}>WBGT Outdoor:</span>
-                        <strong style={{ display: 'block', color: '#f87171', fontSize: '0.95rem' }}>{currentReview.metrics.wbgt_outdoor_c}°C</strong>
-                      </div>
-                      <div>
-                        <span style={{ color: 'var(--text-muted)' }}>UTCI Stress:</span>
-                        <strong style={{ display: 'block', color: '#fb923c', fontSize: '0.95rem' }}>{currentReview.metrics.utci_c}°C</strong>
-                      </div>
-                      <div>
-                        <span style={{ color: 'var(--text-muted)' }}>Air Max Temp:</span>
-                        <strong style={{ display: 'block', color: '#fbbf24', fontSize: '0.95rem' }}>{currentReview.metrics.temp_max_c}°C</strong>
-                      </div>
-                      <div>
-                        <span style={{ color: 'var(--text-muted)' }}>Heat Index:</span>
-                        <strong style={{ display: 'block', color: '#fff' }}>{currentReview.metrics.heat_index_c}°C</strong>
-                      </div>
-                      <div>
-                        <span style={{ color: 'var(--text-muted)' }}>Relative Humidity:</span>
-                        <strong style={{ display: 'block', color: '#fff' }}>{currentReview.metrics.rel_humidity_pct}%</strong>
-                      </div>
-                      <div>
-                        <span style={{ color: 'var(--text-muted)' }}>Projected Surge:</span>
-                        <strong style={{ display: 'block', color: '#f472b6' }}>+{currentReview.predicted_surge_pct}%</strong>
-                      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-300 block mb-1">
+                        Calibration Tier Override (Optional)
+                      </label>
+                      <select
+                        value={calibratedTier}
+                        onChange={(e) => setCalibratedTier(e.target.value)}
+                        className="w-full h-9 rounded-lg border border-white/10 bg-slate-900 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-purple-400 cursor-pointer"
+                      >
+                        <option value="">Keep AI Predicted Tier ({currentReview.ai_tier})</option>
+                        <option value="EXTREME">Override to EXTREME (Red Alert)</option>
+                        <option value="SEVERE">Override to SEVERE (Orange Alert)</option>
+                        <option value="MODERATE">Override to MODERATE (Yellow Alert)</option>
+                        <option value="SAFE">Override to SAFE (Green Advisory)</option>
+                      </select>
                     </div>
 
-                    {/* Analyst Form Controls */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '0.25rem', fontWeight: 600 }}>
-                          Analyst Name & Title:
-                        </label>
-                        <input
-                          type="text"
-                          value={analystName}
-                          onChange={(e) => setAnalystName(e.target.value)}
-                          style={{
-                            width: '100%',
-                            background: 'rgba(30, 41, 59, 0.7)',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            borderRadius: '6px',
-                            padding: '0.45rem 0.65rem',
-                            color: '#fff',
-                            fontSize: '0.78rem'
-                          }}
-                        />
-                      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-300 block mb-1">
+                        Operational Directives & Validation Notes
+                      </label>
+                      <textarea
+                        value={analystNotes}
+                        onChange={(e) => setAnalystNotes(e.target.value)}
+                        placeholder="Add verified meteorological remarks, cooling center orders, or field directives..."
+                        rows={3}
+                        className="w-full rounded-lg border border-white/10 bg-slate-900 p-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-400"
+                      />
+                    </div>
 
-                      <div>
-                        <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '0.25rem', fontWeight: 600 }}>
-                          Calibrate Warning Level (Optional Override):
-                        </label>
-                        <select
-                          value={calibratedTier || currentReview.ai_tier}
-                          onChange={(e) => setCalibratedTier(e.target.value)}
-                          style={{
-                            width: '100%',
-                            background: 'rgba(30, 41, 59, 0.7)',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            borderRadius: '6px',
-                            padding: '0.45rem 0.65rem',
-                            color: '#fff',
-                            fontSize: '0.78rem'
-                          }}
-                        >
-                          <option value="EXTREME">EXTREME (Red Alert - Life Threatening)</option>
-                          <option value="SEVERE">SEVERE (Orange Alert - High Precaution)</option>
-                          <option value="MODERATE">MODERATE (Yellow Alert - Caution)</option>
-                          <option value="SAFE">SAFE (Green - Normal Routine)</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label style={{ display: 'block', fontSize: '0.72rem', color: '#cbd5e1', marginBottom: '0.25rem', fontWeight: 600 }}>
-                          Meteorologist Advisory Notes:
-                        </label>
-                        <textarea
-                          rows={3}
-                          value={analystNotes}
-                          placeholder={currentReview.analyst_notes || "Add ground verification or demographic notes..."}
-                          onChange={(e) => setAnalystNotes(e.target.value)}
-                          style={{
-                            width: '100%',
-                            background: 'rgba(30, 41, 59, 0.7)',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            borderRadius: '6px',
-                            padding: '0.45rem 0.65rem',
-                            color: '#fff',
-                            fontSize: '0.78rem',
-                            resize: 'vertical'
-                          }}
-                        />
-                      </div>
-
-                      <button
+                    <div className="pt-2 flex justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={onClose} className="text-xs border-white/10">
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="gradient"
+                        size="sm"
                         onClick={handleApprove}
                         disabled={submitting}
-                        style={{
-                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                          color: '#fff',
-                          border: 'none',
-                          padding: '0.65rem 1.25rem',
-                          borderRadius: '8px',
-                          fontSize: '0.85rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.5rem',
-                          boxShadow: '0 4px 15px rgba(16, 185, 129, 0.35)',
-                          marginTop: '0.5rem',
-                          opacity: submitting ? 0.7 : 1
-                        }}
+                        className="gap-2 text-xs font-semibold"
                       >
-                        <ShieldCheck size={18} />
-                        {submitting ? 'Broadcasting Alerts...' : 'Approve & Dispatch Public Broadcast'}
-                      </button>
+                        <ShieldCheck className="h-4 w-4" />
+                        <span>{submitting ? 'Authenticating & Dispatching...' : 'Approve & Dispatch Public Broadcast'}</span>
+                      </Button>
                     </div>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+            </div>
+          )
         ) : (
-          /* History View */
-          <div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              {approvedBroadcasts.map((b, i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: 'rgba(30, 41, 59, 0.6)',
-                    border: '1px solid var(--border-subtle)',
-                    borderRadius: '8px',
-                    padding: '0.85rem 1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '0.75rem'
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{b.ward_name}</strong>
-                      <span style={{
-                        background: b.tier === 'EXTREME' ? '#ef4444' : b.tier === 'SEVERE' ? '#f97316' : '#f59e0b',
-                        color: '#fff',
-                        fontSize: '0.65rem',
-                        fontWeight: 800,
-                        padding: '0.1rem 0.45rem',
-                        borderRadius: '999px'
-                      }}>
-                        {b.tier}
-                      </span>
+          /* History Audit Log */
+          <div className="space-y-3">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+              Verified Broadcast Records
+            </span>
+            <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+              {approvedBroadcasts.map(bc => (
+                <div key={bc.id} className="rounded-xl border border-white/10 bg-slate-950/70 p-4 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white">{bc.ward_name}</span>
+                      <Badge variant={getTierVariant(bc.tier)} className="text-[10px] uppercase font-bold px-2 py-0">
+                        {bc.tier}
+                      </Badge>
+                      <span className="text-xs text-slate-400">({bc.city})</span>
                     </div>
-                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                      Approved by: <strong style={{ color: '#cbd5e1' }}>{b.approved_by}</strong> at {b.approved_at}
-                    </p>
+                    <span className="text-[11px] font-mono text-cyan-400">{bc.approved_at}</span>
                   </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', gap: '0.35rem' }}>
-                      {b.channels_used.map((ch, idx) => (
-                        <span key={idx} style={{
-                          background: 'rgba(255,255,255,0.08)',
-                          fontSize: '0.68rem',
-                          color: '#38bdf8',
-                          padding: '0.15rem 0.45rem',
-                          borderRadius: '4px'
-                        }}>
-                          {ch}
-                        </span>
-                      ))}
-                    </div>
-                    <span style={{
-                      background: 'rgba(16, 185, 129, 0.15)',
-                      color: '#34d399',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      padding: '0.25rem 0.6rem',
-                      borderRadius: '999px'
-                    }}>
-                      ✓ DISPATCHED
-                    </span>
+                  <p className="text-xs text-slate-300">
+                    Approved By: <strong className="text-slate-100">{bc.approved_by}</strong>
+                  </p>
+                  {bc.analyst_notes && (
+                    <p className="text-xs text-slate-400 italic bg-black/30 p-2 rounded-lg border border-white/5">
+                      "{bc.analyst_notes}"
+                    </p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[11px] text-slate-400">Channels Dispatched:</span>
+                    {(bc.channels_used || []).map((ch, i) => (
+                      <Badge key={i} variant="outline" className="text-[10px] border-white/10 text-cyan-300 bg-cyan-500/10">
+                        {ch}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
               ))}
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

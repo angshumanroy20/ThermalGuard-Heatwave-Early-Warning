@@ -152,6 +152,7 @@ export interface ApprovedBroadcastItem {
   risk_score: number;
   approved_by: string;
   approved_at: string;
+  analyst_notes?: string;
   dispatched_recipients?: number;
   channels_used: string[];
 }

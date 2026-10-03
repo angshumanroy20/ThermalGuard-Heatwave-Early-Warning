@@ -1,17 +1,18 @@
 import React from 'react';
 import { 
   Flame, 
-  Activity, 
-  Database, 
-  Send, 
-  UserCheck, 
   BookOpen, 
-  Radio, 
-  CloudSun,
+  UserCheck, 
+  Send, 
+  Key, 
+  CloudSun, 
+  Activity,
   ShieldAlert,
-  Key
+  Sparkles
 } from 'lucide-react';
 import { SystemStatus } from '../types';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 
 interface HeaderProps {
   status: SystemStatus | null;
@@ -37,255 +38,139 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMethodology
 }) => {
   return (
-    <header className="app-header">
-      <div className="app-header-inner">
-        {/* Logo and Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div style={{
-            position: 'relative',
-            width: '42px',
-            height: '42px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #ef4444 0%, #f59e0b 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 20px rgba(239, 68, 68, 0.45)'
-          }}>
-            <Flame size={24} color="#fff" />
-            <span style={{
-              position: 'absolute',
-              top: '-3px',
-              right: '-3px',
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              backgroundColor: '#10b981',
-              boxShadow: '0 0 8px #10b981'
-            }} />
+    <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-slate-950/85 backdrop-blur-xl shadow-lg">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        {/* Brand & Mission Title */}
+        <div className="flex items-center gap-3.5">
+          <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 via-orange-500 to-amber-500 shadow-lg shadow-orange-500/25 ring-1 ring-white/20">
+            <Flame className="h-6 w-6 text-white drop-shadow-md" />
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 ring-2 ring-slate-950"></span>
+            </span>
           </div>
+
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <h1 style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '1.4rem',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
-                background: 'linear-gradient(90deg, #ffffff 40%, #fb923c 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                lineHeight: 1.2
-              }}>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-orange-400 font-display">
                 ThermalGuard
               </h1>
-              <span style={{
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                background: 'rgba(239, 68, 68, 0.2)',
-                color: '#f87171',
-                padding: '0.15rem 0.5rem',
-                borderRadius: '999px',
-                border: '1px solid rgba(239, 68, 68, 0.35)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
+              <Badge variant="destructive" className="text-[10px] uppercase font-bold tracking-wider py-0 px-2 border-red-500/40 bg-red-500/20 text-red-300">
                 Early Warning GIS
-              </span>
+              </Badge>
             </div>
-            <p style={{
-              fontSize: '0.74rem',
-              color: 'var(--text-muted)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              marginTop: '1px'
-            }}>
-              Extreme Heatwave Surveillance & Human Thermal Stress Index (WBGT / UTCI / EHF)
+            <p className="text-xs text-slate-400 hidden sm:block">
+              Multi-Metric Heatwave Early Warning & Human Thermal Stress (WBGT • UTCI • EHF)
             </p>
           </div>
         </div>
 
-        {/* Data Pipelines Pill Status Bar */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.6rem',
-          flexWrap: 'wrap',
-          background: 'rgba(15, 23, 42, 0.7)',
-          padding: '0.35rem 0.75rem',
-          borderRadius: '999px',
-          border: '1px solid var(--border-subtle)',
-          fontSize: '0.72rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#cbd5e1' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-            <strong style={{ color: '#fff' }}>IMD</strong> Standards
+        {/* Data Stream Pills Bar */}
+        <div className="hidden lg:flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/80 px-3.5 py-1 text-xs text-slate-300 shadow-inner">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" />
+            <span className="font-semibold text-white">IMD</span> Normals
           </div>
-          <span style={{ color: 'var(--border-subtle)' }}>|</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#cbd5e1' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#3b82f6' }} />
-            <strong style={{ color: '#fff' }}>ERA5</strong> 1991-2020 Normals
+          <span className="text-slate-600">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_6px_#3b82f6]" />
+            <span className="font-semibold text-white">ERA5</span> Baseline
           </div>
-          <span style={{ color: 'var(--border-subtle)' }}>|</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#cbd5e1' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#06b6d4' }} />
-            <strong style={{ color: '#fff' }}>Open-Meteo</strong> NWP Hourly
+          <span className="text-slate-600">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#06b6d4]" />
+            <span className="font-semibold text-white">Open-Meteo</span> Hourly
           </div>
-          <span style={{ color: 'var(--border-subtle)' }}>|</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#cbd5e1' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#a855f7' }} />
-            <strong style={{ color: '#fff' }}>NCMRWF</strong> 4km NWP
+          <span className="text-slate-600">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-purple-500 shadow-[0_0_6px_#a855f7]" />
+            <span className="font-semibold text-white">NCMRWF</span> 4km
           </div>
-          <span style={{ color: 'var(--border-subtle)' }}>|</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#cbd5e1' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b' }} />
-            <strong style={{ color: '#fff' }}>NCDC</strong> HRI Surveillance
+          <span className="text-slate-600">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_6px_#f59e0b]" />
+            <span className="font-semibold text-white">NCDC</span> HRI
           </div>
         </div>
 
-        {/* Action Controls & Modal Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        {/* Controls & Modals Trigger Bar */}
+        <div className="flex items-center gap-2.5 flex-wrap">
           {/* Scenario Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <CloudSun size={15} color="var(--accent-amber)" />
+          <div className="relative flex items-center">
+            <CloudSun className="absolute left-2.5 h-4 w-4 text-amber-400 pointer-events-none" />
             <select
               value={activeScenario}
               onChange={(e) => onScenarioChange(e.target.value)}
-              style={{
-                background: 'rgba(30, 41, 59, 0.85)',
-                color: '#fff',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                padding: '0.4rem 0.75rem',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                outline: 'none',
-                cursor: 'pointer'
-              }}
+              className="h-9 rounded-lg border border-white/15 bg-slate-900/90 pl-8 pr-3 text-xs font-semibold text-slate-100 shadow-sm focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-colors cursor-pointer hover:border-white/30"
+              title="Select meteorological scenario"
             >
-              <option value="MAY_2024_EXTREME_HEATWAVE">Scenario: May 2024 Severe Heatwave (49.2°C Anomaly)</option>
-              <option value="COASTAL_HUMID_HEAT">Scenario: Coastal Sultry Wet-Bulb Surge (78% RH)</option>
-              <option value="LIVE_SYNC">Scenario: Live Real-Time Open-Meteo Stream</option>
+              <option value="MAY_2024_EXTREME_HEATWAVE">May 2024 Severe Heatwave (49.2°C)</option>
+              <option value="COASTAL_HUMID_HEAT">Coastal Sultry Wet-Bulb Surge (78% RH)</option>
+              <option value="LIVE_SYNC">Live Real-Time Open-Meteo Stream</option>
             </select>
           </div>
 
-          {/* Methodology Workflow Button */}
-          <button
+          {/* Methodology Button */}
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onOpenMethodology}
-            style={{
-              background: 'rgba(255, 255, 255, 0.06)',
-              color: '#e2e8f0',
-              border: '1px solid var(--border-subtle)',
-              padding: '0.42rem 0.85rem',
-              borderRadius: '8px',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              transition: 'all 0.2s ease'
-            }}
-            title="View full Methodology and System Architecture Flowchart"
+            className="text-xs gap-1.5 border-white/10 hover:border-cyan-500/40 hover:text-cyan-300"
+            title="View system architecture, psychrometric formulas and feedback loop"
           >
-            <BookOpen size={14} color="#38bdf8" />
-            Methodology & Flowchart
-          </button>
+            <BookOpen className="h-3.5 w-3.5 text-cyan-400" />
+            <span className="hidden md:inline">Methodology & Architecture</span>
+          </Button>
 
-          {/* Risk Analyst Review Queue (Human-in-the-loop from Image 1) */}
-          <button
+          {/* Human-in-the-Loop Risk Analyst Review */}
+          <Button
+            variant={pendingReviewsCount > 0 ? "destructive" : "secondary"}
+            size="sm"
             onClick={onOpenAnalyst}
-            style={{
-              position: 'relative',
-              background: pendingReviewsCount > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-              color: pendingReviewsCount > 0 ? '#fca5a5' : '#e2e8f0',
-              border: pendingReviewsCount > 0 ? '1px solid rgba(239, 68, 68, 0.45)' : '1px solid var(--border-subtle)',
-              padding: '0.42rem 0.9rem',
-              borderRadius: '8px',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              transition: 'all 0.2s ease'
-            }}
-            title="Human-in-the-loop Risk Analyst Review & Approval"
+            className={`text-xs gap-1.5 relative ${
+              pendingReviewsCount > 0 
+                ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30 ring-1 ring-rose-500/40' 
+                : 'border-white/10 hover:border-slate-500'
+            }`}
+            title="Human-in-the-loop Risk Analyst calibration & approval portal"
           >
-            <UserCheck size={15} color={pendingReviewsCount > 0 ? '#ef4444' : '#94a3b8'} />
-            Analyst Review
+            <UserCheck className={`h-3.5 w-3.5 ${pendingReviewsCount > 0 ? 'text-rose-400 animate-pulse' : 'text-slate-400'}`} />
+            <span>Analyst Review</span>
             {pendingReviewsCount > 0 && (
-              <span style={{
-                background: '#ef4444',
-                color: '#fff',
-                fontSize: '0.65rem',
-                fontWeight: 800,
-                padding: '0.1rem 0.45rem',
-                borderRadius: '999px',
-                marginLeft: '0.2rem'
-              }}>
-                {pendingReviewsCount} PENDING
-              </span>
+              <Badge variant="extreme" className="px-1.5 py-0 text-[10px] ml-1 bg-red-600 text-white">
+                {pendingReviewsCount}
+              </Badge>
             )}
-          </button>
+          </Button>
 
-          {/* API Settings Button */}
-          <button
+          {/* Settings / API Keys */}
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onOpenSettings}
-            style={{
-              background: dispatchMode === 'LIVE_PRODUCTION' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-              color: dispatchMode === 'LIVE_PRODUCTION' ? '#fca5a5' : '#e2e8f0',
-              border: dispatchMode === 'LIVE_PRODUCTION' ? '1px solid rgba(239, 68, 68, 0.45)' : '1px solid var(--border-subtle)',
-              padding: '0.42rem 0.85rem',
-              borderRadius: '8px',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              transition: 'all 0.2s ease'
-            }}
-            title="Configure Live Twilio, WhatsApp, and Fast2SMS API keys"
+            className="text-xs gap-1.5 border-white/10 hover:border-slate-500"
+            title="Configure Live Twilio, WhatsApp Business, and Fast2SMS credentials"
           >
-            <Key size={14} color={dispatchMode === 'LIVE_PRODUCTION' ? '#f87171' : '#34d399'} />
-            API Keys
+            <Key className={`h-3.5 w-3.5 ${dispatchMode === 'LIVE_PRODUCTION' ? 'text-rose-400' : 'text-emerald-400'}`} />
+            <span className="hidden sm:inline">API Keys</span>
             {dispatchMode === 'LIVE_PRODUCTION' && (
-              <span style={{
-                background: '#ef4444',
-                color: '#fff',
-                fontSize: '0.62rem',
-                fontWeight: 800,
-                padding: '0.1rem 0.35rem',
-                borderRadius: '4px'
-              }}>
+              <Badge className="px-1 py-0 text-[9px] bg-red-500/30 text-red-300 border-red-500/50">
                 LIVE
-              </span>
+              </Badge>
             )}
-          </button>
+          </Button>
 
-          {/* Alert Simulator Button */}
-          <button
+          {/* Alert Dispatcher */}
+          <Button
+            variant="cyan"
+            size="sm"
             onClick={onOpenSimulator}
-            style={{
-              background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
-              color: '#fff',
-              border: 'none',
-              padding: '0.42rem 0.95rem',
-              borderRadius: '8px',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              boxShadow: '0 2px 10px rgba(37, 99, 235, 0.35)',
-              transition: 'all 0.2s ease'
-            }}
+            className="text-xs gap-1.5 font-semibold shadow-cyan-600/30 hover:shadow-cyan-500/40 shadow-md"
+            title="Simulate multi-channel citizen alert broadcasts & CAP v1.2 XML"
           >
-            <Send size={14} />
-            Alert Dispatcher
-          </button>
+            <Send className="h-3.5 w-3.5" />
+            <span>Alert Dispatcher</span>
+          </Button>
         </div>
       </div>
     </header>
