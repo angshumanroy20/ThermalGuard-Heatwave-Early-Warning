@@ -47,7 +47,7 @@ Guideline-based preventative protocols tailored for:
 
 ### 7. Risk Analyst Approval Workflow ("Human-in-the-Loop")
 Directly implements the AI Risk Engine workflow:
-$$\text{Raw Data} \longrightarrow \text{Processing \& AI Risk Engine} \longrightarrow \text{Output for Review} \longrightarrow \text{Risk Analyst Approval} \longrightarrow \text{Multi-Channel Broadcast}$$
+$$\text{Raw Data} \longrightarrow \text{Processing \ and AI Risk Engine} \longrightarrow \text{Output for Review} \longrightarrow \text{Risk Analyst Approval} \longrightarrow \text{Multi-Channel Broadcast}$$
 Includes a **System Feedback & Improvement** loop to log post-event hospital admissions and calibrate model weights.
 
 ---
